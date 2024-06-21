@@ -61,7 +61,7 @@ Benchmark = (function(superClass) {
 
   function Benchmark() {
     this.state = {
-      mode: "TOP_10",
+      mode: "TOP_10_COUNT",
       tag: null
     };
   }

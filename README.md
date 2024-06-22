@@ -1,4 +1,6 @@
-## search_benchmark_game : Search engine benchmark (SeekStorm, Tantivy, Lucene, ...)
+search_benchmark_game
+====
+### Search engine benchmark: SeekStorm, Tantivy, Lucene, ...
 
 [Benchmark results](https://seekstorm.github.io/bench/)
 

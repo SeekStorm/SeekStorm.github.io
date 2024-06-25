@@ -10,10 +10,10 @@ Open-source search engine libraries (BM25 lexical search) are compared using the
 
 [Benchmark code repository](https://github.com/SeekStorm/search-benchmark-game)
 
-<img src="../assets/search_benchmark_game1.png" width="600" alt="Benchmark">
+<img src="../assets/search_benchmark_game1.png" width="900" alt="Benchmark">
 <br>
 <br>
-<img src="../assets/search_benchmark_game2.png" width="600" alt="Benchmark">
+<img src="../assets/search_benchmark_game2.png" width="900" alt="Benchmark">
 <br>
 <br>
 

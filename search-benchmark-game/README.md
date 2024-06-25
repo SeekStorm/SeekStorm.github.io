@@ -4,16 +4,16 @@ search_benchmark_game
 
 Open-source search engine libraries (BM25 lexical search) are compared using the open-source search_benchmark_game developed by [Tantivy](https://github.com/quickwit-oss/search-benchmark-game/) and [Jason Wolfe](https://github.com/jason-wolfe/search-index-benchmark-game).
 
-[Detailled benchmark results for multifield search](/search-benchmark-game-multifield/)
+[Detailled benchmark results for multifield search](../search-benchmark-game-multifield/)
 
-[Detailled benchmark results for singfield search](/search-benchmark-game-singlefield/)
+[Detailled benchmark results for singlefield search](../search-benchmark-game-singlefield/)
 
 [Benchmark code repository](https://github.com/SeekStorm/search-benchmark-game)
 
-<img src="assets/search_benchmark_game1.png" width="600" alt="Benchmark">
+<img src="../assets/search_benchmark_game1.png" width="600" alt="Benchmark">
 <br>
 <br>
-<img src="assets/search_benchmark_game2.png" width="600" alt="Benchmark">
+<img src="../assets/search_benchmark_game2.png" width="600" alt="Benchmark">
 <br>
 <br>
 
@@ -40,4 +40,3 @@ Btw., concatenating both fields before indexing is not a viable solution because
 Results will vary, depending on your hardware, OS, concurrent OS activity, JVM, evironment temperature, query set, document corpus...
 
 Before making any decisions, you should always replicate the tests on your infrastructure for your specific workload.
-

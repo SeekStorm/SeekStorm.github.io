@@ -16,6 +16,9 @@ Open-source search engine libraries (BM25 lexical search) are compared using the
 <img src="assets/search_benchmark_game2.png" width="900" alt="Benchmark">
 <br>
 <br>
+<img src="assets/search_benchmark_game3.png" width="900" alt="Benchmark">
+<br>
+<br>
 
 ### Multi field search vs. single field search
 
@@ -37,7 +40,12 @@ Btw., concatenating both fields before indexing is not a viable solution because
 
 ### About the results
 
-Results will vary, depending on your hardware, OS, concurrent OS activity, JVM, evironment temperature, query set, document corpus...
+This benchmark is not meant to be a leaderboard, but when every library is "lightning-fast" or  "blazingly fast", it is interesting to see how they stack up against each other. That is helpful not only for the users, 
+but also for the developers to assess unused optimization potential.
+
+Results will vary - depending on your hardware, OS, concurrent OS activity, JVM, environment temperature, query set, and document corpus...
 
 Before making any decisions, you should always replicate the tests on your infrastructure for your specific workload.
+
+Query latency is only one aspect of search - relevancy, functionality, scalability, and ease of use are equally important.
 

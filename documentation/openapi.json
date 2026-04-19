@@ -610,7 +610,7 @@
               "format": "int64",
               "minimum": 0
             },
-            "example": -1
+            "example": 0
           },
           {
             "name": "include_deleted",
@@ -923,7 +923,7 @@
             "application/json": {
               "schema": {
                 "type": "array",
-                "items": false,
+                "items": {},
                 "prefixItems": [
                   {
                     "type": "integer",
@@ -2160,7 +2160,7 @@
                   },
                   "filter": {
                     "type": "array",
-                    "items": false,
+                    "items": {},
                     "prefixItems": [
                       {
                         "type": "array",
@@ -3007,7 +3007,7 @@
                     "type": "array",
                     "items": {
                       "type": "array",
-                      "items": false,
+                      "items": {},
                       "prefixItems": [
                         {
                           "type": "string"
@@ -3053,7 +3053,7 @@
                     "type": "array",
                     "items": {
                       "type": "array",
-                      "items": false,
+                      "items": {},
                       "prefixItems": [
                         {
                           "type": "string"
@@ -3099,7 +3099,7 @@
                     "type": "array",
                     "items": {
                       "type": "array",
-                      "items": false,
+                      "items": {},
                       "prefixItems": [
                         {
                           "type": "string"
@@ -3145,7 +3145,7 @@
                     "type": "array",
                     "items": {
                       "type": "array",
-                      "items": false,
+                      "items": {},
                       "prefixItems": [
                         {
                           "type": "string"
@@ -3191,7 +3191,7 @@
                     "type": "array",
                     "items": {
                       "type": "array",
-                      "items": false,
+                      "items": {},
                       "prefixItems": [
                         {
                           "type": "string"
@@ -3236,7 +3236,7 @@
                     "type": "array",
                     "items": {
                       "type": "array",
-                      "items": false,
+                      "items": {},
                       "prefixItems": [
                         {
                           "type": "string"
@@ -3281,7 +3281,7 @@
                     "type": "array",
                     "items": {
                       "type": "array",
-                      "items": false,
+                      "items": {},
                       "prefixItems": [
                         {
                           "type": "string"
@@ -3326,7 +3326,7 @@
                     "type": "array",
                     "items": {
                       "type": "array",
-                      "items": false,
+                      "items": {},
                       "prefixItems": [
                         {
                           "type": "string"
@@ -3371,7 +3371,7 @@
                     "type": "array",
                     "items": {
                       "type": "array",
-                      "items": false,
+                      "items": {},
                       "prefixItems": [
                         {
                           "type": "string"
@@ -3416,7 +3416,7 @@
                     "type": "array",
                     "items": {
                       "type": "array",
-                      "items": false,
+                      "items": {},
                       "prefixItems": [
                         {
                           "type": "string"
@@ -3461,7 +3461,7 @@
                     "type": "array",
                     "items": {
                       "type": "array",
-                      "items": false,
+                      "items": {},
                       "prefixItems": [
                         {
                           "type": "string"
@@ -3644,7 +3644,7 @@
                     "type": "array",
                     "items": {
                       "type": "array",
-                      "items": false,
+                      "items": {},
                       "prefixItems": [
                         {
                           "type": "string"
@@ -4429,7 +4429,7 @@
               "type": "array",
               "items": {
                 "type": "array",
-                "items": false,
+                "items": {},
                 "prefixItems": [
                   {
                     "type": "string"

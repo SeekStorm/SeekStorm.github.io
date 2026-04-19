@@ -1,0 +1,4692 @@
+{
+  "openapi": "3.1.0",
+  "info": {
+    "title": "SeekStorm REST API documentation",
+    "description": "Search engine library & multi-tenancy server",
+    "contact": {
+      "name": "Wolf Garbe",
+      "email": "wolf.garbe@seekstorm.com"
+    },
+    "license": {
+      "name": "Apache-2.0",
+      "identifier": "Apache-2.0"
+    },
+    "version": "3.0.0"
+  },
+  "servers": [
+    {
+      "url": "http://127.0.0.1",
+      "description": "Local SeekStorm server"
+    }
+  ],
+  "paths": {
+    "/api/v1/live": {
+      "get": {
+        "tags": [
+          "Info"
+        ],
+        "summary": "Live",
+        "description": "Returns a live message with the SeekStorm server version.",
+        "operationId": "live_api",
+        "responses": {
+          "200": {
+            "description": "SeekStorm server is live",
+            "content": {
+              "text/plain": {
+                "schema": {
+                  "type": "string"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/apikey": {
+      "get": {
+        "tags": [
+          "API Key"
+        ],
+        "summary": "Get API Key Info",
+        "description": "Get info about all indices associated with the specified API key",
+        "operationId": "get_apikey_indices_info_api",
+        "parameters": [
+          {
+            "name": "apikey",
+            "in": "header",
+            "description": "YOUR_SECRET_API_KEY",
+            "required": true,
+            "schema": {
+              "type": "string"
+            },
+            "example": "AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA="
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Indices found, returns a list of index info",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/IndexResponseObject"
+                  }
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Request object incorrect"
+          },
+          "401": {
+            "description": "API key does not exists"
+          },
+          "404": {
+            "description": "Index ID or API key missing"
+          }
+        }
+      },
+      "post": {
+        "tags": [
+          "API Key"
+        ],
+        "summary": "Create API Key",
+        "description": "Creates an API key and returns the Base64 encoded API key.\nExpects the Base64 encoded master API key in the header.\nUse the master API key displayed in the server console at startup.\n\nWARNING: make sure to set the MASTER_KEY_SECRET environment variable to a secret, otherwise your generated API keys will be compromised.\nFor development purposes you may also use the SeekStorm server console command 'create' to create an demo API key 'AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA='.",
+        "operationId": "create_apikey_api",
+        "parameters": [
+          {
+            "name": "apikey",
+            "in": "header",
+            "description": "YOUR_MASTER_API_KEY",
+            "required": true,
+            "schema": {
+              "type": "string"
+            },
+            "example": "BBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBB="
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "description": "Quota per API key",
+                "required": [
+                  "indices_max",
+                  "indices_size_max",
+                  "documents_max",
+                  "operations_max"
+                ],
+                "properties": {
+                  "indices_max": {
+                    "type": "integer",
+                    "description": "number of indices per API key",
+                    "minimum": 0
+                  },
+                  "indices_size_max": {
+                    "type": "integer",
+                    "description": "combined index size per API key in MB",
+                    "minimum": 0
+                  },
+                  "documents_max": {
+                    "type": "integer",
+                    "description": "combined number of documents in all indices per API key",
+                    "minimum": 0
+                  },
+                  "operations_max": {
+                    "type": "integer",
+                    "description": "operations per month per API key: index/update/delete/query doc",
+                    "minimum": 0
+                  },
+                  "rate_limit": {
+                    "type": [
+                      "integer",
+                      "null"
+                    ],
+                    "description": "queries per sec per API key",
+                    "minimum": 0
+                  }
+                }
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "API key created, returns Base64 encoded API key",
+            "content": {
+              "text/plain": {
+                "schema": {
+                  "type": "string"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "master_apikey missing"
+          }
+        }
+      },
+      "delete": {
+        "tags": [
+          "API Key"
+        ],
+        "summary": "Delete API Key",
+        "description": "Deletes an API and returns the number of remaining API keys.\nExpects the Base64 encoded master API key in the header.\nWARNING: This will delete all indices and documents associated with the API key.",
+        "operationId": "delete_apikey_api",
+        "parameters": [
+          {
+            "name": "apikey",
+            "in": "header",
+            "description": "YOUR_MASTER_API_KEY",
+            "required": true,
+            "schema": {
+              "type": "string"
+            },
+            "example": "BBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBB="
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "API key deleted, returns number of remaining API keys",
+            "content": {
+              "text/plain": {
+                "schema": {
+                  "type": "integer",
+                  "format": "int64",
+                  "minimum": 0
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "master_apikey missing"
+          }
+        }
+      }
+    },
+    "/api/v1/index": {
+      "post": {
+        "tags": [
+          "Index"
+        ],
+        "summary": "Create Index",
+        "description": "Create an index within the directory associated with the specified API key and return the index_id.",
+        "operationId": "create_index_api",
+        "parameters": [
+          {
+            "name": "apikey",
+            "in": "header",
+            "description": "YOUR_SECRET_API_KEY",
+            "required": true,
+            "schema": {
+              "type": "string"
+            },
+            "example": "AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA="
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "description": "Create index request object",
+                "required": [
+                  "index_name",
+                  "schema",
+                  "synonyms"
+                ],
+                "properties": {
+                  "index_name": {
+                    "type": "string",
+                    "example": "demo_index"
+                  },
+                  "schema": {
+                    "type": "array",
+                    "items": {
+                      "$ref": "#/components/schemas/SchemaField"
+                    },
+                    "example": [
+                      {
+                        "field": "title",
+                        "field_type": "Text",
+                        "store": true,
+                        "index_lexical": true,
+                        "boost": 10.0
+                      },
+                      {
+                        "field": "body",
+                        "field_type": "Text",
+                        "store": true,
+                        "index_lexical": true,
+                        "longest": true
+                      },
+                      {
+                        "field": "url",
+                        "field_type": "Text",
+                        "store": true,
+                        "index_lexical": false
+                      },
+                      {
+                        "field": "date",
+                        "field_type": "Timestamp",
+                        "store": true,
+                        "index_lexical": false,
+                        "facet": true
+                      }
+                    ]
+                  },
+                  "similarity": {
+                    "$ref": "#/components/schemas/LexicalSimilarity"
+                  },
+                  "tokenizer": {
+                    "$ref": "#/components/schemas/TokenizerType"
+                  },
+                  "stemmer": {
+                    "$ref": "#/components/schemas/StemmerType"
+                  },
+                  "stop_words": {
+                    "$ref": "#/components/schemas/StopwordType"
+                  },
+                  "frequent_words": {
+                    "$ref": "#/components/schemas/FrequentwordType"
+                  },
+                  "ngram_indexing": {
+                    "type": "integer",
+                    "format": "int32",
+                    "minimum": 0
+                  },
+                  "document_compression": {
+                    "$ref": "#/components/schemas/DocumentCompression"
+                  },
+                  "synonyms": {
+                    "type": "array",
+                    "items": {
+                      "$ref": "#/components/schemas/Synonym"
+                    },
+                    "example": [
+                      {
+                        "terms": [
+                          "berry",
+                          "lingonberry",
+                          "blueberry",
+                          "gooseberry"
+                        ],
+                        "multiway": false
+                      }
+                    ]
+                  },
+                  "force_shard_number": {
+                    "type": [
+                      "integer",
+                      "null"
+                    ],
+                    "description": "Set number of shards manually or automatically.\n- none: number of shards is set automatically = number of physical processor cores (default)\n- small: slower indexing, higher latency, slightly higher throughput, faster realtime search, lower RAM consumption\n- large: faster indexing, lower latency, slightly lower throughput, slower realtime search, higher RAM consumption",
+                    "minimum": 0
+                  },
+                  "spelling_correction": {
+                    "oneOf": [
+                      {
+                        "type": "null"
+                      },
+                      {
+                        "$ref": "#/components/schemas/SpellingCorrection",
+                        "description": "Enable spelling correction for search queries using the SymSpell algorithm.\nWhen enabled, a SymSpell dictionary is incrementally created during indexing of documents and stored in the index.\nIn addition you need to set the parameter `query_rewriting` in the search method to enable it per query.\nThe creation of an individual dictionary derived from the indexed documents improves the correction quality compared to a generic dictionary.\nAn dictionary per index improves the privacy compared to a global dictionary derived from all indices.\nThe dictionary is deleted when delete_index or clear_index is called.\nNote: enabling spelling correction increases the index size, indexing time and query latency.\nDefault: None. Enable by setting a value for max_dictionary_edit_distance (1..2 recommended).\nThe higher the value, the higher the number of errors taht can be corrected - but also the memory consumption, lookup latency, and the number of false positives."
+                      }
+                    ]
+                  },
+                  "query_completion": {
+                    "oneOf": [
+                      {
+                        "type": "null"
+                      },
+                      {
+                        "$ref": "#/components/schemas/QueryCompletion"
+                      }
+                    ]
+                  },
+                  "clustering": {
+                    "$ref": "#/components/schemas/Clustering"
+                  },
+                  "inference": {
+                    "$ref": "#/components/schemas/Inference"
+                  }
+                }
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "Index created, returns the index_id",
+            "content": {
+              "text/plain": {
+                "schema": {
+                  "type": "integer",
+                  "format": "int64",
+                  "minimum": 0
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Request object incorrect"
+          },
+          "401": {
+            "description": "API key does not exists"
+          },
+          "404": {
+            "description": "API key does not exists"
+          }
+        }
+      }
+    },
+    "/api/v1/index/{index_id}": {
+      "get": {
+        "tags": [
+          "Index"
+        ],
+        "summary": "Get Index Info",
+        "description": "Get index Info from index with index_id",
+        "operationId": "get_index_info_api",
+        "parameters": [
+          {
+            "name": "apikey",
+            "in": "header",
+            "description": "YOUR_SECRET_API_KEY",
+            "required": true,
+            "schema": {
+              "type": "string"
+            },
+            "example": "AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA="
+          },
+          {
+            "name": "index_id",
+            "in": "path",
+            "description": "index id",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "format": "int64",
+              "minimum": 0
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Index found, returns the index info",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/IndexResponseObject"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Request object incorrect"
+          },
+          "401": {
+            "description": "api_key missing"
+          },
+          "404": {
+            "description": "API key does not exist"
+          }
+        }
+      },
+      "delete": {
+        "tags": [
+          "Index"
+        ],
+        "summary": "Delete Index",
+        "description": "Delete an index within the directory associated with the specified API key and return the number of remaining indices.",
+        "operationId": "delete_index_api",
+        "parameters": [
+          {
+            "name": "apikey",
+            "in": "header",
+            "description": "YOUR_SECRET_API_KEY",
+            "required": true,
+            "schema": {
+              "type": "string"
+            },
+            "example": "AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA="
+          },
+          {
+            "name": "index_id",
+            "in": "path",
+            "description": "index id",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "format": "int64",
+              "minimum": 0
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Index deleted, returns the number of indices",
+            "content": {
+              "text/plain": {
+                "schema": {
+                  "type": "integer",
+                  "format": "int64",
+                  "minimum": 0
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "index_id invalid or missing"
+          },
+          "401": {
+            "description": "api_key missing"
+          },
+          "404": {
+            "description": "api_key does not exists"
+          }
+        }
+      },
+      "patch": {
+        "tags": [
+          "Index"
+        ],
+        "summary": "Commit Index",
+        "description": "Commit moves indexed documents from the intermediate uncompressed data structure (array lists/HashMap, queryable by realtime search) in RAM\nto the final compressed data structure (roaring bitmap) on Mmap or disk -\nwhich is persistent, more compact, with lower query latency and allows search with realtime=false.\nCommit is invoked automatically each time 64K documents are newly indexed as well as on close_index (e.g. server quit).\nThere is no way to prevent this automatic commit by not manually invoking it.\nBut commit can also be invoked manually at any time at any number of newly indexed documents.\ncommit is a **hard commit** for persistence on disk. A **soft commit** for searchability\nis invoked implicitly with every index_doc,\ni.e. the document can immediately searched and included in the search results\nif it matches the query AND the query paramter realtime=true is enabled.\n**Use commit with caution, as it is an expensive operation**.\n**Usually, there is no need to invoke it manually**, as it is invoked automatically every 64k documents and when the index is closed with close_index.\nBefore terminating the program, always call close_index (commit), otherwise all documents indexed since last (manual or automatic) commit are lost.\nThere are only 2 reasons that justify a manual commit:\n1. if you want to search newly indexed documents without using realtime=true for search performance reasons or\n2. if after indexing new documents there won't be more documents indexed (for some time),\n   so there won't be (soon) a commit invoked automatically at the next 64k threshold or close_index,\n   but you still need immediate persistence guarantees on disk to protect against data loss in the event of a crash.",
+        "operationId": "commit_index_api",
+        "parameters": [
+          {
+            "name": "apikey",
+            "in": "header",
+            "description": "YOUR_SECRET_API_KEY",
+            "required": true,
+            "schema": {
+              "type": "string"
+            },
+            "example": "AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA="
+          },
+          {
+            "name": "index_id",
+            "in": "path",
+            "description": "index id",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "format": "int64",
+              "minimum": 0
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Index committed, returns the number of committed documents",
+            "content": {
+              "text/plain": {
+                "schema": {
+                  "type": "integer",
+                  "format": "int64",
+                  "minimum": 0
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Index id invalid or missing"
+          },
+          "401": {
+            "description": "api_key missing"
+          },
+          "404": {
+            "description": "API key does not exist"
+          }
+        }
+      }
+    },
+    "/api/v1/index/{index_id}/doc_id": {
+      "get": {
+        "tags": [
+          "Iterator"
+        ],
+        "summary": "Document iterator",
+        "description": "Document iterator via GET and POST are identical, only the way parameters are passed differ.\nThe document iterator allows to iterate over all document IDs and documents in the entire index, forward or backward.\nIt enables efficient sequential access to every document, even in very large indexes, without running a search.\nPaging through the index works without collecting document IDs to Min-heap in size-limited RAM first.\nThe iterator guarantees that only valid document IDs are returned, even though document IDs are not strictly continuous.\nDocument IDs can also be fetched in batches, reducing round trips and significantly improving performance, especially when using the REST API.\nTypical use cases include index export, conversion, analytics, audits, and inspection.\nExplanation of \"eventually continuous\" docid:\nIn SeekStorm, document IDs become continuous over time. In a multi-sharded index, each shard maintains its own document ID space.\nBecause documents are distributed across shards in a non-deterministic, load-dependent way, shard-local document IDs advance at different rates.\nWhen these are mapped to global document IDs, temporary gaps can appear.\nAs a result, simply iterating from 0 to the total document count may encounter invalid IDs near the end.\nThe Document Iterator abstracts this complexity and reliably returns only valid document IDs.\n# Parameters\n- docid=None, take>0: **skip first s document IDs**, then **take next t document IDs** of an index.\n- docid=None, take<0: **skip last s document IDs**, then **take previous t document IDs** of an index.\n- docid=Some, take>0: **skip next s document IDs**, then **take next t document IDs** of an index, relative to a given document ID, with end-of-index indicator.\n- docid=Some, take<0: **skip previous s document IDs**, then **take previous t document IDs**, relative to a given document ID, with start-of-index indicator.\n- take=0: does not make sense, that defies the purpose of get_iterator.\n- The sign of take indicates the direction of iteration: positive take for forward iteration, negative take for backward iteration.\n- The skip parameter is always positive, indicating the number of document IDs to skip before taking document IDs. The skip direction is determined by the sign of take too.\n- include_document: if true, the documents are also retrieved along with their document IDs.\nNext page:     take last  docid from previous result set, skip=1, take=+page_size\nPrevious page: take first docid from previous result set, skip=1, take=-page_size\nReturns an IteratorResult, consisting of the number of actually skipped document IDs, and a list of taken document IDs and documents, sorted ascending).\nDetect end/begin of index during iteration: if returned vec.len() < requested take || if returned skip <requested skip",
+        "operationId": "get_iterator_api_get",
+        "parameters": [
+          {
+            "name": "apikey",
+            "in": "header",
+            "description": "YOUR_SECRET_API_KEY",
+            "required": true,
+            "schema": {
+              "type": "string"
+            },
+            "example": "AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA="
+          },
+          {
+            "name": "index_id",
+            "in": "path",
+            "description": "index id",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "format": "int64",
+              "minimum": 0
+            },
+            "example": 0
+          },
+          {
+            "name": "document_id",
+            "in": "query",
+            "description": "document id",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "format": "int64",
+              "minimum": 0
+            }
+          },
+          {
+            "name": "skip",
+            "in": "query",
+            "description": "skip document IDs",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "format": "int64",
+              "minimum": 0
+            },
+            "example": 0
+          },
+          {
+            "name": "take",
+            "in": "query",
+            "description": "take document IDs",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "format": "int64",
+              "minimum": 0
+            },
+            "example": -1
+          },
+          {
+            "name": "include_deleted",
+            "in": "query",
+            "description": "include deleted document IDs in results",
+            "required": true,
+            "schema": {
+              "type": "boolean"
+            },
+            "example": false
+          },
+          {
+            "name": "include_document",
+            "in": "query",
+            "description": "include documents in results",
+            "required": true,
+            "schema": {
+              "type": "boolean"
+            },
+            "example": false
+          },
+          {
+            "name": "fields",
+            "in": "query",
+            "description": "fields to include in document. If not specified, all fields are included",
+            "required": true,
+            "schema": {
+              "type": "array",
+              "items": {
+                "type": "string"
+              }
+            },
+            "example": [
+              "title",
+              "body"
+            ]
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Document ID found, returning an IteratorResult",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/IteratorResult"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Request object incorrect"
+          },
+          "401": {
+            "description": "api_key missing"
+          },
+          "404": {
+            "description": "api_key does not exists"
+          }
+        }
+      },
+      "post": {
+        "tags": [
+          "Iterator"
+        ],
+        "summary": "Document iterator",
+        "description": "Document iterator via GET and POST are identical, only the way parameters are passed differ.\nThe document iterator allows to iterate over all document IDs and documents in the entire index, forward or backward.\nIt enables efficient sequential access to every document, even in very large indexes, without running a search.\nPaging through the index works without collecting document IDs to Min-heap in size-limited RAM first.\nThe iterator guarantees that only valid document IDs are returned, even though document IDs are not strictly continuous.\nDocument IDs can also be fetched in batches, reducing round trips and significantly improving performance, especially when using the REST API.\nTypical use cases include index export, conversion, analytics, audits, and inspection.\nExplanation of \"eventually continuous\" docid:\nIn SeekStorm, document IDs become continuous over time. In a multi-sharded index, each shard maintains its own document ID space.\nBecause documents are distributed across shards in a non-deterministic, load-dependent way, shard-local document IDs advance at different rates.\nWhen these are mapped to global document IDs, temporary gaps can appear.\nAs a result, simply iterating from 0 to the total document count may encounter invalid IDs near the end.\nThe Document Iterator abstracts this complexity and reliably returns only valid document IDs.\n# Parameters\n- docid=None, take>0: **skip first s document IDs**, then **take next t document IDs** of an index.\n- docid=None, take<0: **skip last s document IDs**, then **take previous t document IDs** of an index.\n- docid=Some, take>0: **skip next s document IDs**, then **take next t document IDs** of an index, relative to a given document ID, with end-of-index indicator.\n- docid=Some, take<0: **skip previous s document IDs**, then **take previous t document IDs**, relative to a given document ID, with start-of-index indicator.\n- take=0: does not make sense, that defies the purpose of get_iterator.\n- The sign of take indicates the direction of iteration: positive take for forward iteration, negative take for backward iteration.\n- The skip parameter is always positive, indicating the number of document IDs to skip before taking document IDs. The skip direction is determined by the sign of take too.\n- include_document: if true, the documents are also retrieved along with their document IDs.\nNext page:     take last  docid from previous result set, skip=1, take=+page_size\nPrevious page: take first docid from previous result set, skip=1, take=-page_size\nReturns an IteratorResult, consisting of the number of actually skipped document IDs, and a list of taken document IDs and documents, sorted ascending).\nDetect end/begin of index during iteration: if returned vec.len() < requested take || if returned skip <requested skip",
+        "operationId": "get_iterator_api_post",
+        "parameters": [
+          {
+            "name": "apikey",
+            "in": "header",
+            "description": "YOUR_SECRET_API_KEY",
+            "required": true,
+            "schema": {
+              "type": "string"
+            },
+            "example": "AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA="
+          },
+          {
+            "name": "index_id",
+            "in": "path",
+            "description": "index id",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "format": "int64",
+              "minimum": 0
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/GetIteratorRequest"
+              },
+              "example": {
+                "document_id": null,
+                "skip": 0,
+                "take": -1
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "Document ID found, returning an IteratorResult",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/IteratorResult"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Request object incorrect"
+          },
+          "401": {
+            "description": "api_key missing"
+          },
+          "404": {
+            "description": "api_key does not exists"
+          }
+        }
+      }
+    },
+    "/api/v1/index/{index_id}/doc": {
+      "post": {
+        "tags": [
+          "Document"
+        ],
+        "summary": "Index Document(s)",
+        "description": "Index a JSON document or an array of JSON documents (bulk), each consisting of arbitrary key-value pairs to the index with the specified apikey and index_id, and return the number of indexed docs.\nIndex documents enables true real-time search (as opposed to near realtime.search):\nWhen in query_index the parameter `realtime` is set to `true` then indexed, but uncommitted documents are immediately included in the search results, without requiring a commit or refresh.\nTherefore a explicit commit_index is almost never required, as it is invoked automatically after 64k documents are indexed or on close_index for persistence.",
+        "operationId": "index_document_api",
+        "parameters": [
+          {
+            "name": "apikey",
+            "in": "header",
+            "description": "YOUR_SECRET_API_KEY",
+            "required": true,
+            "schema": {
+              "type": "string"
+            },
+            "example": "AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA="
+          },
+          {
+            "name": "index_id",
+            "in": "path",
+            "description": "index id",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "format": "int64",
+              "minimum": 0
+            }
+          }
+        ],
+        "requestBody": {
+          "description": "JSON document or array of JSON documents, each consisting of key-value pairs",
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "additionalProperties": {},
+                "propertyNames": {
+                  "type": "string"
+                }
+              },
+              "example": {
+                "title": "title1 test",
+                "body": "body1",
+                "url": "url1"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "Document indexed, returns the number of indexed documents",
+            "content": {
+              "text/plain": {
+                "schema": {
+                  "type": "integer",
+                  "minimum": 0
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Document object invalid"
+          },
+          "401": {
+            "description": "api_key missing"
+          },
+          "404": {
+            "description": "API key does not exist"
+          }
+        }
+      },
+      "delete": {
+        "tags": [
+          "Document"
+        ],
+        "summary": "Delete Document(s) by Request Object",
+        "description": "Delete document by document_id, by array of document_id (bulk), by query (SearchRequestObject) from index with index_id, or clear all documents from index.\nImmediately effective, indpendent of commit.\nIndex space used by deleted documents is not reclaimed (until compaction is implemented), but result_count_total is updated.\nBy manually deleting the delete.bin file the deleted documents can be recovered (until compaction).\nDeleted documents impact performance, especially but not limited to counting (Count, TopKCount). They also increase the size of the index (until compaction is implemented).\nFor minimal query latency delete index and reindexing documents is preferred over deleting documents (until compaction is implemented).\nBM25 scores are not updated (until compaction is implemented), but the impact is minimal.\nDocument ID can by obtained by search. When deleting by query (SearchRequestObject), it is advised to perform a dry run search first, to see which documents will be deleted.",
+        "operationId": "delete_document_by_object_api",
+        "parameters": [
+          {
+            "name": "apikey",
+            "in": "header",
+            "description": "YOUR_SECRET_API_KEY",
+            "required": true,
+            "schema": {
+              "type": "string"
+            },
+            "example": "AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA="
+          },
+          {
+            "name": "index_id",
+            "in": "path",
+            "description": "index id",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "format": "int64",
+              "minimum": 0
+            }
+          }
+        ],
+        "requestBody": {
+          "description": "Specifies the document(s) to delete by different request objects\n- 'clear' : delete all documents in index (clear index)\n- u64 : delete single doc ID\n- [u64] : delete array of doc ID \n- SearchRequestObject : delete documents by query",
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/SearchRequestObject"
+              },
+              "example": {
+                "query": "test",
+                "offset": 0,
+                "length": 10,
+                "realtime": false,
+                "field_filter": [
+                  "title",
+                  "body"
+                ]
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "Document deleted, returns indexed documents count",
+            "content": {
+              "text/plain": {
+                "schema": {
+                  "type": "integer",
+                  "minimum": 0
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Request object incorrect"
+          },
+          "401": {
+            "description": "api_key missing"
+          },
+          "404": {
+            "description": "api_key does not exists"
+          }
+        }
+      },
+      "patch": {
+        "tags": [
+          "Document"
+        ],
+        "summary": "Update Document(s)",
+        "description": "Update a JSON document or an array of JSON documents (bulk), each consisting of arbitrary key-value pairs to the index with the specified apikey and index_id, and return the number of indexed docs.\nUpdate document is a combination of delete_document and index_document.\nAll current limitations of delete_document apply.\nUpdate documents enables true real-time search (as opposed to near realtime.search):\nWhen in query_index the parameter `realtime` is set to `true` then indexed, but uncommitted documents are immediately included in the search results, without requiring a commit or refresh.\nTherefore a explicit commit_index is almost never required, as it is invoked automatically after 64k documents are indexed or on close_index for persistence.",
+        "operationId": "update_document_api",
+        "parameters": [
+          {
+            "name": "apikey",
+            "in": "header",
+            "description": "YOUR_SECRET_API_KEY",
+            "required": true,
+            "schema": {
+              "type": "string"
+            },
+            "example": "AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA="
+          },
+          {
+            "name": "index_id",
+            "in": "path",
+            "description": "index id",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "format": "int64",
+              "minimum": 0
+            }
+          }
+        ],
+        "requestBody": {
+          "description": "Tuple of (doc_id, JSON document) or array of tuples (doc_id, JSON documents), each JSON document consisting of arbitrary key-value pairs",
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "array",
+                "items": false,
+                "prefixItems": [
+                  {
+                    "type": "integer",
+                    "format": "int64",
+                    "minimum": 0
+                  },
+                  {
+                    "type": "object",
+                    "additionalProperties": {},
+                    "propertyNames": {
+                      "type": "string"
+                    }
+                  }
+                ]
+              },
+              "example": [
+                0,
+                {
+                  "title": "title1 test",
+                  "body": "body1",
+                  "url": "url1"
+                }
+              ]
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "Document indexed, returns the number of indexed documents",
+            "content": {
+              "text/plain": {
+                "schema": {
+                  "type": "integer",
+                  "minimum": 0
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Document object invalid"
+          },
+          "401": {
+            "description": "api_key missing"
+          },
+          "404": {
+            "description": "API key does not exist"
+          }
+        }
+      }
+    },
+    "/api/v1/index/{index_id}/file": {
+      "post": {
+        "tags": [
+          "PDF File"
+        ],
+        "summary": "Index PDF file",
+        "description": "Index PDF file (byte array) to the index with the specified apikey and index_id, and return the number of indexed docs.\n- Converts PDF to a JSON document with \"title\", \"body\", \"url\" and \"date\" fields and indexes it.\n- extracts title from metatag, or first line of text, or from filename\n- extracts creation date from metatag, or from file creation date (Unix timestamp: the number of seconds since 1 January 1970)\n- copies all ingested pdf files to \"files\" subdirectory in index",
+        "operationId": "index_file_api",
+        "parameters": [
+          {
+            "name": "apikey",
+            "in": "header",
+            "description": "YOUR_SECRET_API_KEY",
+            "required": true,
+            "schema": {
+              "type": "string"
+            },
+            "example": "AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA="
+          },
+          {
+            "name": "file",
+            "in": "header",
+            "description": "filepath from header for JSON 'url' field",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "date",
+            "in": "header",
+            "description": "date (timestamp) from header, as fallback for JSON 'date' field, if PDF date meta tag unaivailable",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "index_id",
+            "in": "path",
+            "description": "index id",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "format": "int64",
+              "minimum": 0
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/octet-stream": {
+              "schema": {
+                "type": "array",
+                "items": {
+                  "type": "integer",
+                  "format": "int32",
+                  "minimum": 0
+                }
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "PDF file indexed, returns the number of indexed documents",
+            "content": {
+              "text/plain": {
+                "schema": {
+                  "type": "integer",
+                  "minimum": 0
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Document object invalid"
+          },
+          "401": {
+            "description": "api_key missing"
+          },
+          "404": {
+            "description": "API key does not exist"
+          }
+        }
+      }
+    },
+    "/api/v1/index/{index_id}/doc/{document_id}": {
+      "get": {
+        "tags": [
+          "Document"
+        ],
+        "summary": "Get Document",
+        "description": "Get document from index with index_id\n⚠️ Use search or get_iterator first to obtain a valid doc_id. Document IDs are not guaranteed to be continuous and gapless!",
+        "operationId": "get_document_api",
+        "parameters": [
+          {
+            "name": "apikey",
+            "in": "header",
+            "description": "YOUR_SECRET_API_KEY",
+            "required": true,
+            "schema": {
+              "type": "string"
+            },
+            "example": "AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA="
+          },
+          {
+            "name": "index_id",
+            "in": "path",
+            "description": "index id",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "format": "int64",
+              "minimum": 0
+            }
+          },
+          {
+            "name": "document_id",
+            "in": "path",
+            "description": "document id",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "format": "int64",
+              "minimum": 0
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/GetDocumentRequest"
+              },
+              "example": {
+                "query_terms": [
+                  "test"
+                ],
+                "fields": [
+                  "title",
+                  "body"
+                ],
+                "highlights": [
+                  {
+                    "field": "title",
+                    "fragment_number": 0,
+                    "fragment_size": 1000,
+                    "highlight_markup": true
+                  },
+                  {
+                    "field": "body",
+                    "fragment_number": 2,
+                    "fragment_size": 160,
+                    "highlight_markup": true
+                  },
+                  {
+                    "field": "body",
+                    "name": "body2",
+                    "fragment_number": 0,
+                    "fragment_size": 4000,
+                    "highlight_markup": true
+                  }
+                ]
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "Document found, returns the JSON document consisting of arbitrary key-value pairs",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "additionalProperties": {},
+                  "propertyNames": {
+                    "type": "string"
+                  }
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Request object incorrect"
+          },
+          "401": {
+            "description": "api_key missing"
+          },
+          "404": {
+            "description": "api_key does not exists"
+          }
+        }
+      },
+      "delete": {
+        "tags": [
+          "Document"
+        ],
+        "summary": "Delete Document",
+        "description": "Delete document by document_id from index with index_id\n⚠️ Use search or get_iterator first to obtain a valid doc_id. Document IDs are not guaranteed to be continuous and gapless!\nImmediately effective, indpendent of commit.\nIndex space used by deleted documents is not reclaimed (until compaction is implemented), but result_count_total is updated.\nBy manually deleting the delete.bin file the deleted documents can be recovered (until compaction).\nDeleted documents impact performance, especially but not limited to counting (Count, TopKCount). They also increase the size of the index (until compaction is implemented).\nFor minimal query latency delete index and reindexing documents is preferred over deleting documents (until compaction is implemented).\nBM25 scores are not updated (until compaction is implemented), but the impact is minimal.",
+        "operationId": "delete_document_by_parameter_api",
+        "parameters": [
+          {
+            "name": "apikey",
+            "in": "header",
+            "description": "YOUR_SECRET_API_KEY",
+            "required": true,
+            "schema": {
+              "type": "string"
+            },
+            "example": "AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA="
+          },
+          {
+            "name": "index_id",
+            "in": "path",
+            "description": "index id",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "format": "int64",
+              "minimum": 0
+            }
+          },
+          {
+            "name": "document_id",
+            "in": "path",
+            "description": "document id",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "format": "int64",
+              "minimum": 0
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Document deleted, returns indexed documents count",
+            "content": {
+              "text/plain": {
+                "schema": {
+                  "type": "integer",
+                  "minimum": 0
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Request object incorrect"
+          },
+          "401": {
+            "description": "api_key missing"
+          },
+          "404": {
+            "description": "api_key does not exists"
+          }
+        }
+      }
+    },
+    "/api/v1/index/{index_id}/file/{document_id}": {
+      "get": {
+        "tags": [
+          "PDF File"
+        ],
+        "summary": "Get PDF file",
+        "description": "Get PDF file from index with index_id\n⚠️ Use search or get_iterator first to obtain s valid doc_id. Document IDs are not guaranteed to be continuous and gapless!",
+        "operationId": "get_file_api",
+        "parameters": [
+          {
+            "name": "apikey",
+            "in": "header",
+            "description": "YOUR_SECRET_API_KEY",
+            "required": true,
+            "schema": {
+              "type": "string"
+            },
+            "example": "AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA="
+          },
+          {
+            "name": "index_id",
+            "in": "path",
+            "description": "index id",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "format": "int64",
+              "minimum": 0
+            }
+          },
+          {
+            "name": "document_id",
+            "in": "path",
+            "description": "document id",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "format": "int64",
+              "minimum": 0
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "PDF file found, returns the PDF file as byte array",
+            "content": {
+              "application/octet-stream": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "type": "integer",
+                    "format": "int32",
+                    "minimum": 0
+                  }
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Request object incorrect"
+          },
+          "401": {
+            "description": "api_key missing"
+          },
+          "404": {
+            "description": "api_key does not exists"
+          }
+        }
+      }
+    },
+    "/api/v1/index/{index_id}/query": {
+      "get": {
+        "tags": [
+          "Query"
+        ],
+        "summary": "Query Index",
+        "description": "Query results from index with index_id.\nQuery index via GET is a convenience function, that offers only a limited set of parameters compared to Query Index via POST.",
+        "operationId": "query_index_api_get",
+        "parameters": [
+          {
+            "name": "apikey",
+            "in": "header",
+            "description": "YOUR_SECRET_API_KEY",
+            "required": true,
+            "schema": {
+              "type": "string"
+            },
+            "example": "AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA="
+          },
+          {
+            "name": "index_id",
+            "in": "path",
+            "description": "index id",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "format": "int64",
+              "minimum": 0
+            },
+            "example": 0
+          },
+          {
+            "name": "query",
+            "in": "query",
+            "description": "query string",
+            "required": true,
+            "schema": {
+              "type": "string"
+            },
+            "example": "hello"
+          },
+          {
+            "name": "offset",
+            "in": "query",
+            "description": "result offset",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "format": "int64",
+              "minimum": 0
+            },
+            "example": 0
+          },
+          {
+            "name": "length",
+            "in": "query",
+            "description": "result length",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "format": "int64",
+              "minimum": 1
+            },
+            "example": 10
+          },
+          {
+            "name": "realtime",
+            "in": "query",
+            "description": "include uncommitted documents",
+            "required": true,
+            "schema": {
+              "type": "boolean"
+            },
+            "example": false
+          },
+          {
+            "name": "enable_empty_query",
+            "in": "query",
+            "description": "allow empty query",
+            "required": true,
+            "schema": {
+              "type": "boolean"
+            },
+            "example": false
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Results found, returns the SearchResultObject",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SearchResultObject"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "No query specified"
+          },
+          "401": {
+            "description": "api_key missing"
+          },
+          "404": {
+            "description": "API key does not exist"
+          }
+        }
+      },
+      "post": {
+        "tags": [
+          "Query"
+        ],
+        "summary": "Query Index",
+        "description": "Query results from index with index_id\nThe following parameters are supported:\n- Result type\n- Result sorting\n- Realtime search\n- Field filter\n- Fields to include in search results\n- Distance fields: derived fields from distance calculations\n- Highlights: keyword-in-context snippets and term highlighting\n- Query facets: which facets fields to calculate and return at query time\n- Facet filter: filter facets by field and value\n- Result sort: sort results by field and direction\n- Query type default: default query type, if not specified in query",
+        "operationId": "query_index_api_post",
+        "parameters": [
+          {
+            "name": "apikey",
+            "in": "header",
+            "description": "YOUR_SECRET_API_KEY",
+            "required": true,
+            "schema": {
+              "type": "string"
+            },
+            "example": "AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA="
+          },
+          {
+            "name": "index_id",
+            "in": "path",
+            "description": "index id",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "format": "int64",
+              "minimum": 0
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "description": "Search request object",
+                "required": [
+                  "query"
+                ],
+                "properties": {
+                  "query": {
+                    "type": "string",
+                    "description": "Query string, search operators + - \"\" are recognized."
+                  },
+                  "query_vector": {
+                    "description": "Optional query vector: If None, then the query vector is derived from the query string using the specified model. If Some, then the query vector is used for semantic search and the query string is only used for lexical search and highlighting."
+                  },
+                  "enable_empty_query": {
+                    "type": "boolean",
+                    "description": "Enable empty query: if true, an empty query string iterates through all indexed documents, supporting the query parameters: offset, length, query_facets, facet_filter, result_sort,\notherwise an empty query string returns no results.\nTypical use cases include index browsing, index export, conversion, analytics, audits, and inspection.",
+                    "default": false,
+                    "example": false
+                  },
+                  "offset": {
+                    "type": "integer",
+                    "description": "Offset of search results to return.",
+                    "default": 0,
+                    "example": 0,
+                    "minimum": 0
+                  },
+                  "length": {
+                    "type": "integer",
+                    "description": "Number of search results to return.",
+                    "default": 10,
+                    "example": 10,
+                    "minimum": 1
+                  },
+                  "result_type": {
+                    "$ref": "#/components/schemas/ResultType"
+                  },
+                  "realtime": {
+                    "type": "boolean",
+                    "description": "True realtime search: include indexed, but uncommitted documents into search results."
+                  },
+                  "highlights": {
+                    "type": "array",
+                    "items": {
+                      "$ref": "#/components/schemas/Highlight"
+                    }
+                  },
+                  "field_filter": {
+                    "type": "array",
+                    "items": {
+                      "type": "string"
+                    },
+                    "description": "Specify field names where to search at querytime, whereas SchemaField.indexed is set at indextime. If empty then all indexed fields are searched.",
+                    "example": [
+                      "title"
+                    ]
+                  },
+                  "fields": {
+                    "type": "array",
+                    "items": {
+                      "type": "string"
+                    }
+                  },
+                  "distance_fields": {
+                    "type": "array",
+                    "items": {
+                      "$ref": "#/components/schemas/DistanceField"
+                    }
+                  },
+                  "query_facets": {
+                    "type": "array",
+                    "items": {
+                      "$ref": "#/components/schemas/QueryFacet"
+                    }
+                  },
+                  "facet_filter": {
+                    "type": "array",
+                    "items": {
+                      "$ref": "#/components/schemas/FacetFilter"
+                    }
+                  },
+                  "result_sort": {
+                    "type": "array",
+                    "items": {
+                      "$ref": "#/components/schemas/ResultSort"
+                    },
+                    "description": "Sort field and order:\nSearch results are sorted by the specified facet field, either in ascending or descending order.\nIf no sort field is specified, then the search results are sorted by rank in descending order per default.\nMultiple sort fields are combined by a \"sort by, then sort by\"-method (\"tie-breaking\"-algorithm).\nThe results are sorted by the first field, and only for those results where the first field value is identical (tie) the results are sub-sorted by the second field,\nuntil the n-th field value is either not equal or the last field is reached.\nA special _score field (BM25x), reflecting how relevant the result is for a given search query (phrase match, match in title etc.) can be combined with any of the other sort fields as primary, secondary or n-th search criterium.\nSort is only enabled on facet fields that are defined in schema at create_index!\nExamples:\n- result_sort = vec![ResultSort {field: \"price\".into(), order: SortOrder::Descending, base: FacetValue::None},ResultSort {field: \"language\".into(), order: SortOrder::Ascending, base: FacetValue::None}];\n- result_sort = vec![ResultSort {field: \"location\".into(),order: SortOrder::Ascending, base: FacetValue::Point(vec![38.8951, -77.0364])}];",
+                    "example": [
+                      {
+                        "field": "date",
+                        "order": "Ascending",
+                        "base": "None"
+                      }
+                    ]
+                  },
+                  "query_type_default": {
+                    "$ref": "#/components/schemas/QueryType"
+                  },
+                  "query_rewriting": {
+                    "$ref": "#/components/schemas/QueryRewriting"
+                  },
+                  "search_mode": {
+                    "$ref": "#/components/schemas/SearchMode"
+                  }
+                }
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "Results found, returns the SearchResultObject",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SearchResultObject"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Request object incorrect"
+          },
+          "401": {
+            "description": "api_key missing"
+          },
+          "404": {
+            "description": "API key does not exist"
+          }
+        }
+      }
+    }
+  },
+  "components": {
+    "schemas": {
+      "AnnMode": {
+        "oneOf": [
+          {
+            "type": "string",
+            "description": "Search in all clusters (default)",
+            "enum": [
+              "All"
+            ]
+          },
+          {
+            "type": "object",
+            "description": "Search only in the clusters with the highest similarity scores to the query vector.\nThe number of clusters to search is specified by the n-probe parameter.\nYou cannot directly set a specific, guaranteed recall number (e.g., \"always give me 95% recall@10\"). There is no one-fits-all, there is no automatism.\nInstead, you manually tune parameters that control the tradeoff between query latency and accuracy.\nBecause recall depends heavily on the structure of your specific data (distribution, dimensionality, and clustering) and queries,\nthere is always a trial-and-error (benchmarking) phase required to determine the right settings for your data.\nExamples:\nwikipedia, VectorSimilarity::Dot, dimensions: 64, Precision::F32, Clustering::Auto, Clustering::I8, recall@10=95% -> Nprobe(55)\nwikipedia, VectorSimilarity::Dot, dimensions: 64, Precision::F32, Clustering::Auto, Clustering::I8, recall@10=99% -> Nprobe(140)\nsift1m, VectorSimilarity::Euclidean, dimensions: 128, Precision::F32, Clustering::Auto, Quantization::None, recall@10=95% -> Nprobe(11)\nsift1m, VectorSimilarity::Euclidean, dimensions: 128, Precision::F32, Clustering::Auto, Quantization::None, recall@10=99% -> Nprobe(22)",
+            "required": [
+              "Nprobe"
+            ],
+            "properties": {
+              "Nprobe": {
+                "type": "integer",
+                "description": "Search only in the clusters with the highest similarity scores to the query vector.\nThe number of clusters to search is specified by the n-probe parameter.\nYou cannot directly set a specific, guaranteed recall number (e.g., \"always give me 95% recall@10\"). There is no one-fits-all, there is no automatism.\nInstead, you manually tune parameters that control the tradeoff between query latency and accuracy.\nBecause recall depends heavily on the structure of your specific data (distribution, dimensionality, and clustering) and queries,\nthere is always a trial-and-error (benchmarking) phase required to determine the right settings for your data.\nExamples:\nwikipedia, VectorSimilarity::Dot, dimensions: 64, Precision::F32, Clustering::Auto, Clustering::I8, recall@10=95% -> Nprobe(55)\nwikipedia, VectorSimilarity::Dot, dimensions: 64, Precision::F32, Clustering::Auto, Clustering::I8, recall@10=99% -> Nprobe(140)\nsift1m, VectorSimilarity::Euclidean, dimensions: 128, Precision::F32, Clustering::Auto, Quantization::None, recall@10=95% -> Nprobe(11)\nsift1m, VectorSimilarity::Euclidean, dimensions: 128, Precision::F32, Clustering::Auto, Quantization::None, recall@10=99% -> Nprobe(22)",
+                "minimum": 0
+              }
+            }
+          },
+          {
+            "type": "object",
+            "description": "Search only in clusters with similarity scores to the query vector above the specified threshold.\nFor dot product similarity, the similarity threshold should be between 0.0 and 1.0, where higher values indicate higher similarity (identical=1.0).\nFor Euclidean distance similarity, the similarity threshold should be between 0.0 and infinity, where lower values indicate higher similarity (identical=0.0).",
+            "required": [
+              "Similaritythreshold"
+            ],
+            "properties": {
+              "Similaritythreshold": {
+                "type": "number",
+                "format": "float",
+                "description": "Search only in clusters with similarity scores to the query vector above the specified threshold.\nFor dot product similarity, the similarity threshold should be between 0.0 and 1.0, where higher values indicate higher similarity (identical=1.0).\nFor Euclidean distance similarity, the similarity threshold should be between 0.0 and infinity, where lower values indicate higher similarity (identical=0.0)."
+              }
+            }
+          },
+          {
+            "type": "object",
+            "description": "Search only in the clusters with the highest similarity scores to the query vector, but only if their similarity scores are above the specified threshold, and up to the number of clusters specified by the n-probe parameter.\nFor dot product similarity, the similarity threshold should be between 0.0 and 1.0, where higher values indicate higher similarity (identical=1.0).\nFor Euclidean distance similarity, the similarity threshold should be between 0.0 and infinity, where lower values indicate higher similarity (identical=0.0).",
+            "required": [
+              "NprobeSimilaritythreshold"
+            ],
+            "properties": {
+              "NprobeSimilaritythreshold": {
+                "type": "array",
+                "items": {
+                  "type": "object"
+                },
+                "description": "Search only in the clusters with the highest similarity scores to the query vector, but only if their similarity scores are above the specified threshold, and up to the number of clusters specified by the n-probe parameter.\nFor dot product similarity, the similarity threshold should be between 0.0 and 1.0, where higher values indicate higher similarity (identical=1.0).\nFor Euclidean distance similarity, the similarity threshold should be between 0.0 and infinity, where lower values indicate higher similarity (identical=0.0).",
+                "maxItems": 2,
+                "minItems": 2
+              }
+            }
+          }
+        ],
+        "description": "Specifies in which cluster to search for ANN results."
+      },
+      "Clustering": {
+        "oneOf": [
+          {
+            "type": "string",
+            "description": "Exhaustive vector search, no clustering/ANN.",
+            "enum": [
+              "None"
+            ]
+          },
+          {
+            "type": "string",
+            "description": "The number of clusters is automatically determined depending on the number of vectors per level and shard.",
+            "enum": [
+              "Auto"
+            ]
+          },
+          {
+            "type": "object",
+            "description": "Set the number of clusters to a fixed value per level and shard.",
+            "required": [
+              "Fixed"
+            ],
+            "properties": {
+              "Fixed": {
+                "type": "integer",
+                "description": "Set the number of clusters to a fixed value per level and shard.",
+                "minimum": 0
+              }
+            }
+          }
+        ],
+        "description": "Clustering defines the clustering behavior for approximate nearest neighbor (ANN) search: None, Auto, Fixed(usize)."
+      },
+      "DistanceField": {
+        "type": "object",
+        "description": "DistanceField defines a field for proximity search.",
+        "required": [
+          "field",
+          "distance",
+          "base",
+          "unit"
+        ],
+        "properties": {
+          "field": {
+            "type": "string",
+            "description": "field name of a numeric facet field (currently onyl Point field type supported)"
+          },
+          "distance": {
+            "type": "string",
+            "description": "field name of the distance field we are deriving from the numeric facet field (Point type) and the base (Point type)"
+          },
+          "base": {
+            "$ref": "#/components/schemas/Vec",
+            "description": "base point (lat,lon) for distance calculation"
+          },
+          "unit": {
+            "$ref": "#/components/schemas/DistanceUnit",
+            "description": "distance unit for the distance field: kilometers or miles"
+          }
+        }
+      },
+      "DistanceUnit": {
+        "type": "string",
+        "description": "DistanceUnit defines the unit for distance calculation: kilometers or miles.",
+        "enum": [
+          "Kilometers",
+          "Miles"
+        ]
+      },
+      "DocumentCompression": {
+        "type": "string",
+        "description": "Compression type for document store",
+        "enum": [
+          "None",
+          "Lz4",
+          "Snappy",
+          "Zstd"
+        ]
+      },
+      "FacetFilter": {
+        "oneOf": [
+          {
+            "type": "object",
+            "description": "U8 range filter",
+            "required": [
+              "U8"
+            ],
+            "properties": {
+              "U8": {
+                "type": "object",
+                "description": "U8 range filter",
+                "required": [
+                  "field",
+                  "filter"
+                ],
+                "properties": {
+                  "field": {
+                    "type": "string",
+                    "description": "field name"
+                  },
+                  "filter": {
+                    "$ref": "#/components/schemas/RangeU8",
+                    "description": "filter: range start, range end"
+                  }
+                }
+              }
+            }
+          },
+          {
+            "type": "object",
+            "description": "U16 range filter",
+            "required": [
+              "U16"
+            ],
+            "properties": {
+              "U16": {
+                "type": "object",
+                "description": "U16 range filter",
+                "required": [
+                  "field",
+                  "filter"
+                ],
+                "properties": {
+                  "field": {
+                    "type": "string",
+                    "description": "field name"
+                  },
+                  "filter": {
+                    "$ref": "#/components/schemas/RangeU16",
+                    "description": "filter: range start, range end"
+                  }
+                }
+              }
+            }
+          },
+          {
+            "type": "object",
+            "description": "U32 range filter",
+            "required": [
+              "U32"
+            ],
+            "properties": {
+              "U32": {
+                "type": "object",
+                "description": "U32 range filter",
+                "required": [
+                  "field",
+                  "filter"
+                ],
+                "properties": {
+                  "field": {
+                    "type": "string",
+                    "description": "field name"
+                  },
+                  "filter": {
+                    "$ref": "#/components/schemas/RangeU32",
+                    "description": "filter: range start, range end"
+                  }
+                }
+              }
+            }
+          },
+          {
+            "type": "object",
+            "description": "U64 range filter",
+            "required": [
+              "U64"
+            ],
+            "properties": {
+              "U64": {
+                "type": "object",
+                "description": "U64 range filter",
+                "required": [
+                  "field",
+                  "filter"
+                ],
+                "properties": {
+                  "field": {
+                    "type": "string",
+                    "description": "field name"
+                  },
+                  "filter": {
+                    "$ref": "#/components/schemas/RangeU64",
+                    "description": "filter: range start, range end"
+                  }
+                }
+              }
+            }
+          },
+          {
+            "type": "object",
+            "description": "I8 range filter",
+            "required": [
+              "I8"
+            ],
+            "properties": {
+              "I8": {
+                "type": "object",
+                "description": "I8 range filter",
+                "required": [
+                  "field",
+                  "filter"
+                ],
+                "properties": {
+                  "field": {
+                    "type": "string",
+                    "description": "field name"
+                  },
+                  "filter": {
+                    "$ref": "#/components/schemas/RangeI8",
+                    "description": "filter: range start, range end"
+                  }
+                }
+              }
+            }
+          },
+          {
+            "type": "object",
+            "description": "I16 range filter",
+            "required": [
+              "I16"
+            ],
+            "properties": {
+              "I16": {
+                "type": "object",
+                "description": "I16 range filter",
+                "required": [
+                  "field",
+                  "filter"
+                ],
+                "properties": {
+                  "field": {
+                    "type": "string",
+                    "description": "field name"
+                  },
+                  "filter": {
+                    "$ref": "#/components/schemas/RangeI16",
+                    "description": "filter: range start, range end"
+                  }
+                }
+              }
+            }
+          },
+          {
+            "type": "object",
+            "description": "I32 range filter",
+            "required": [
+              "I32"
+            ],
+            "properties": {
+              "I32": {
+                "type": "object",
+                "description": "I32 range filter",
+                "required": [
+                  "field",
+                  "filter"
+                ],
+                "properties": {
+                  "field": {
+                    "type": "string",
+                    "description": "field name"
+                  },
+                  "filter": {
+                    "$ref": "#/components/schemas/RangeI32",
+                    "description": "filter: range start, range end"
+                  }
+                }
+              }
+            }
+          },
+          {
+            "type": "object",
+            "description": "I64 range filter",
+            "required": [
+              "I64"
+            ],
+            "properties": {
+              "I64": {
+                "type": "object",
+                "description": "I64 range filter",
+                "required": [
+                  "field",
+                  "filter"
+                ],
+                "properties": {
+                  "field": {
+                    "type": "string",
+                    "description": "field name"
+                  },
+                  "filter": {
+                    "$ref": "#/components/schemas/RangeI64",
+                    "description": "filter: range start, range end"
+                  }
+                }
+              }
+            }
+          },
+          {
+            "type": "object",
+            "description": "Timestamp range filter, Unix timestamp: the number of seconds since 1 January 1970",
+            "required": [
+              "Timestamp"
+            ],
+            "properties": {
+              "Timestamp": {
+                "type": "object",
+                "description": "Timestamp range filter, Unix timestamp: the number of seconds since 1 January 1970",
+                "required": [
+                  "field",
+                  "filter"
+                ],
+                "properties": {
+                  "field": {
+                    "type": "string",
+                    "description": "field name"
+                  },
+                  "filter": {
+                    "$ref": "#/components/schemas/RangeI64",
+                    "description": "filter: range start, range end"
+                  }
+                }
+              }
+            }
+          },
+          {
+            "type": "object",
+            "description": "F32 range filter",
+            "required": [
+              "F32"
+            ],
+            "properties": {
+              "F32": {
+                "type": "object",
+                "description": "F32 range filter",
+                "required": [
+                  "field",
+                  "filter"
+                ],
+                "properties": {
+                  "field": {
+                    "type": "string",
+                    "description": "field name"
+                  },
+                  "filter": {
+                    "$ref": "#/components/schemas/RangeF32",
+                    "description": "filter: range start, range end"
+                  }
+                }
+              }
+            }
+          },
+          {
+            "type": "object",
+            "description": "F64 range filter",
+            "required": [
+              "F64"
+            ],
+            "properties": {
+              "F64": {
+                "type": "object",
+                "description": "F64 range filter",
+                "required": [
+                  "field",
+                  "filter"
+                ],
+                "properties": {
+                  "field": {
+                    "type": "string",
+                    "description": "field name"
+                  },
+                  "filter": {
+                    "$ref": "#/components/schemas/RangeF64",
+                    "description": "filter: range start, range end"
+                  }
+                }
+              }
+            }
+          },
+          {
+            "type": "object",
+            "description": "String16 filter",
+            "required": [
+              "String16"
+            ],
+            "properties": {
+              "String16": {
+                "type": "object",
+                "description": "String16 filter",
+                "required": [
+                  "field",
+                  "filter"
+                ],
+                "properties": {
+                  "field": {
+                    "type": "string",
+                    "description": "field name"
+                  },
+                  "filter": {
+                    "type": "array",
+                    "items": {
+                      "type": "string"
+                    },
+                    "description": "filter: array of facet string values"
+                  }
+                }
+              }
+            }
+          },
+          {
+            "type": "object",
+            "description": "StringSet16 filter",
+            "required": [
+              "StringSet16"
+            ],
+            "properties": {
+              "StringSet16": {
+                "type": "object",
+                "description": "StringSet16 filter",
+                "required": [
+                  "field",
+                  "filter"
+                ],
+                "properties": {
+                  "field": {
+                    "type": "string",
+                    "description": "field name"
+                  },
+                  "filter": {
+                    "type": "array",
+                    "items": {
+                      "type": "string"
+                    },
+                    "description": "filter: array of facet string values"
+                  }
+                }
+              }
+            }
+          },
+          {
+            "type": "object",
+            "description": "String32 filter",
+            "required": [
+              "String32"
+            ],
+            "properties": {
+              "String32": {
+                "type": "object",
+                "description": "String32 filter",
+                "required": [
+                  "field",
+                  "filter"
+                ],
+                "properties": {
+                  "field": {
+                    "type": "string",
+                    "description": "field name"
+                  },
+                  "filter": {
+                    "type": "array",
+                    "items": {
+                      "type": "string"
+                    },
+                    "description": "filter: array of facet string values"
+                  }
+                }
+              }
+            }
+          },
+          {
+            "type": "object",
+            "description": "StringSet32 filter",
+            "required": [
+              "StringSet32"
+            ],
+            "properties": {
+              "StringSet32": {
+                "type": "object",
+                "description": "StringSet32 filter",
+                "required": [
+                  "field",
+                  "filter"
+                ],
+                "properties": {
+                  "field": {
+                    "type": "string",
+                    "description": "field name"
+                  },
+                  "filter": {
+                    "type": "array",
+                    "items": {
+                      "type": "string"
+                    },
+                    "description": "filter: array of facet string values"
+                  }
+                }
+              }
+            }
+          },
+          {
+            "type": "object",
+            "description": "Point proximity range filter",
+            "required": [
+              "Point"
+            ],
+            "properties": {
+              "Point": {
+                "type": "object",
+                "description": "Point proximity range filter",
+                "required": [
+                  "field",
+                  "filter"
+                ],
+                "properties": {
+                  "field": {
+                    "type": "string",
+                    "description": "field name"
+                  },
+                  "filter": {
+                    "type": "array",
+                    "items": false,
+                    "prefixItems": [
+                      {
+                        "type": "array",
+                        "items": {
+                          "type": "number",
+                          "format": "double"
+                        }
+                      },
+                      {
+                        "type": "object",
+                        "description": "F64 range filter",
+                        "required": [
+                          "start",
+                          "end"
+                        ],
+                        "properties": {
+                          "start": {
+                            "type": "number",
+                            "format": "double",
+                            "description": "range start"
+                          },
+                          "end": {
+                            "type": "number",
+                            "format": "double",
+                            "description": "range end"
+                          }
+                        }
+                      },
+                      {
+                        "type": "string",
+                        "description": "DistanceUnit defines the unit for distance calculation: kilometers or miles.",
+                        "enum": [
+                          "Kilometers",
+                          "Miles"
+                        ]
+                      }
+                    ],
+                    "description": "filter: base point (latitude/lat, longitude/lon), proximity range start, proximity range end, distance unit"
+                  }
+                }
+              }
+            }
+          }
+        ],
+        "description": "FacetFilter:\neither numerical range facet filter (range start/end) or\nstring facet filter (vector of strings) at least one (boolean OR) must match."
+      },
+      "FacetValue": {
+        "oneOf": [
+          {
+            "type": "object",
+            "description": "Boolean value",
+            "required": [
+              "Bool"
+            ],
+            "properties": {
+              "Bool": {
+                "type": "boolean",
+                "description": "Boolean value"
+              }
+            }
+          },
+          {
+            "type": "object",
+            "description": "Unsigned 8-bit integer",
+            "required": [
+              "U8"
+            ],
+            "properties": {
+              "U8": {
+                "type": "integer",
+                "format": "int32",
+                "description": "Unsigned 8-bit integer",
+                "minimum": 0
+              }
+            }
+          },
+          {
+            "type": "object",
+            "description": "Unsigned 16-bit integer",
+            "required": [
+              "U16"
+            ],
+            "properties": {
+              "U16": {
+                "type": "integer",
+                "format": "int32",
+                "description": "Unsigned 16-bit integer",
+                "minimum": 0
+              }
+            }
+          },
+          {
+            "type": "object",
+            "description": "Unsigned 32-bit integer",
+            "required": [
+              "U32"
+            ],
+            "properties": {
+              "U32": {
+                "type": "integer",
+                "format": "int32",
+                "description": "Unsigned 32-bit integer",
+                "minimum": 0
+              }
+            }
+          },
+          {
+            "type": "object",
+            "description": "Unsigned 64-bit integer",
+            "required": [
+              "U64"
+            ],
+            "properties": {
+              "U64": {
+                "type": "integer",
+                "format": "int64",
+                "description": "Unsigned 64-bit integer",
+                "minimum": 0
+              }
+            }
+          },
+          {
+            "type": "object",
+            "description": "Signed 8-bit integer",
+            "required": [
+              "I8"
+            ],
+            "properties": {
+              "I8": {
+                "type": "integer",
+                "format": "int32",
+                "description": "Signed 8-bit integer"
+              }
+            }
+          },
+          {
+            "type": "object",
+            "description": "Signed 16-bit integer",
+            "required": [
+              "I16"
+            ],
+            "properties": {
+              "I16": {
+                "type": "integer",
+                "format": "int32",
+                "description": "Signed 16-bit integer"
+              }
+            }
+          },
+          {
+            "type": "object",
+            "description": "Signed 32-bit integer",
+            "required": [
+              "I32"
+            ],
+            "properties": {
+              "I32": {
+                "type": "integer",
+                "format": "int32",
+                "description": "Signed 32-bit integer"
+              }
+            }
+          },
+          {
+            "type": "object",
+            "description": "Signed 64-bit integer",
+            "required": [
+              "I64"
+            ],
+            "properties": {
+              "I64": {
+                "type": "integer",
+                "format": "int64",
+                "description": "Signed 64-bit integer"
+              }
+            }
+          },
+          {
+            "type": "object",
+            "description": "Unix timestamp: the number of seconds since 1 January 1970",
+            "required": [
+              "Timestamp"
+            ],
+            "properties": {
+              "Timestamp": {
+                "type": "integer",
+                "format": "int64",
+                "description": "Unix timestamp: the number of seconds since 1 January 1970"
+              }
+            }
+          },
+          {
+            "type": "object",
+            "description": "32-bit floating point number",
+            "required": [
+              "F32"
+            ],
+            "properties": {
+              "F32": {
+                "type": "number",
+                "format": "float",
+                "description": "32-bit floating point number"
+              }
+            }
+          },
+          {
+            "type": "object",
+            "description": "64-bit floating point number",
+            "required": [
+              "F64"
+            ],
+            "properties": {
+              "F64": {
+                "type": "number",
+                "format": "double",
+                "description": "64-bit floating point number"
+              }
+            }
+          },
+          {
+            "type": "object",
+            "description": "String value",
+            "required": [
+              "String"
+            ],
+            "properties": {
+              "String": {
+                "type": "string",
+                "description": "String value"
+              }
+            }
+          },
+          {
+            "type": "object",
+            "description": "String set value",
+            "required": [
+              "StringSet"
+            ],
+            "properties": {
+              "StringSet": {
+                "type": "array",
+                "items": {
+                  "type": "string"
+                },
+                "description": "String set value"
+              }
+            }
+          },
+          {
+            "type": "object",
+            "description": "Point value: latitude/lat, longitude/lon",
+            "required": [
+              "Point"
+            ],
+            "properties": {
+              "Point": {
+                "$ref": "#/components/schemas/Vec",
+                "description": "Point value: latitude/lat, longitude/lon"
+              }
+            }
+          },
+          {
+            "type": "string",
+            "description": "No value",
+            "enum": [
+              "None"
+            ]
+          }
+        ],
+        "description": "FacetValue: Facet field value types"
+      },
+      "FieldType": {
+        "type": "string",
+        "description": "FieldType defines the type of a field in the document: u8, u16, u32, u64, i8, i16, i32, i64, f32, f64, point, string, stringset, text.",
+        "enum": [
+          "U8",
+          "U16",
+          "U32",
+          "U64",
+          "I8",
+          "I16",
+          "I32",
+          "I64",
+          "Timestamp",
+          "F32",
+          "F64",
+          "Bool",
+          "String16",
+          "String32",
+          "StringSet16",
+          "StringSet32",
+          "Point",
+          "Text",
+          "Json",
+          "Binary"
+        ]
+      },
+      "FrequentwordType": {
+        "oneOf": [
+          {
+            "type": "string",
+            "description": "No frequent words",
+            "enum": [
+              "None"
+            ]
+          },
+          {
+            "type": "string",
+            "description": "English frequent words",
+            "enum": [
+              "English"
+            ]
+          },
+          {
+            "type": "string",
+            "description": "German frequent words",
+            "enum": [
+              "German"
+            ]
+          },
+          {
+            "type": "string",
+            "description": "French frequent words",
+            "enum": [
+              "French"
+            ]
+          },
+          {
+            "type": "string",
+            "description": "Spanish frequent words",
+            "enum": [
+              "Spanish"
+            ]
+          },
+          {
+            "type": "object",
+            "description": "Custom frequent words",
+            "required": [
+              "Custom"
+            ],
+            "properties": {
+              "Custom": {
+                "type": "object",
+                "description": "Custom frequent words",
+                "required": [
+                  "terms"
+                ],
+                "properties": {
+                  "terms": {
+                    "type": "array",
+                    "items": {
+                      "type": "string"
+                    },
+                    "description": "List of frequent terms, max. 256 terms."
+                  }
+                }
+              }
+            }
+          }
+        ],
+        "description": "FrequentwordType defines the frequentword behavior: None, English, German, French, Spanish, Custom.\nAdjacent frequent terms are combined to bi-grams, both in index and query: for shorter posting lists and faster phrase queries (only for bi-grams of frequent terms).\nThe lists of stop_words and frequent_words should not overlap."
+      },
+      "GetDocumentRequest": {
+        "type": "object",
+        "description": "Specifies which document and which field to return",
+        "properties": {
+          "query_terms": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            },
+            "description": "query terms for highlighting"
+          },
+          "highlights": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/Highlight"
+            },
+            "description": "which fields to highlight: create keyword-in-context fragments and highlight terms"
+          },
+          "fields": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            },
+            "description": "which fields to return"
+          },
+          "distance_fields": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/DistanceField"
+            },
+            "description": "which distance fields to derive and return"
+          }
+        }
+      },
+      "GetIteratorRequest": {
+        "type": "object",
+        "description": "Specifies which document ID to return",
+        "properties": {
+          "document_id": {
+            "type": [
+              "integer",
+              "null"
+            ],
+            "format": "int64",
+            "description": "base document ID to start the iteration from\nUse None to start from the beginning (take>0) or the end (take<0) of the index\nIn JSON use null for None",
+            "minimum": 0
+          },
+          "skip": {
+            "type": "integer",
+            "description": "the number of document IDs to skip",
+            "minimum": 0
+          },
+          "take": {
+            "type": "integer",
+            "description": "the number of document IDs to return\ntake>0: take next t document IDs, take<0: take previous t document IDs"
+          },
+          "include_deleted": {
+            "type": "boolean",
+            "description": "if true, also deleted document IDs are included in the result"
+          },
+          "include_document": {
+            "type": "boolean",
+            "description": "if true, the documents are also retrieved along with their document IDs"
+          },
+          "fields": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            },
+            "description": "which fields to return (if include_document is true, if empty then return all stored fields)"
+          }
+        }
+      },
+      "Highlight": {
+        "type": "object",
+        "description": "Specifies the number and size of fragments (snippets, summaries) to generate from each specified field to provide a \"keyword in context\" (KWIC) functionality.\nWith highlight_markup the matching query terms within the fragments can be highlighted with HTML markup.",
+        "required": [
+          "field"
+        ],
+        "properties": {
+          "field": {
+            "type": "string",
+            "description": "Specifies the field from which the fragments  (snippets, summaries) are created."
+          },
+          "name": {
+            "type": "string",
+            "description": "Allows to specifiy multiple highlight result fields from the same source field, leaving the original field intact,\nDefault: if name is empty then field is used instead, i.e the original field is overwritten with the highlight."
+          },
+          "fragment_number": {
+            "type": "integer",
+            "description": "If 0/default then return the full original text without fragmenting.",
+            "minimum": 0
+          },
+          "fragment_size": {
+            "type": "integer",
+            "description": "Specifies the length of a highlight fragment.\nThe default 0 returns the full original text without truncating, but still with highlighting if highlight_markup is enabled.",
+            "minimum": 0
+          },
+          "highlight_markup": {
+            "type": "boolean",
+            "description": "if true, the matching query terms within the fragments are highlighted with HTML markup **\\<b\\>term\\<\\/b\\>**."
+          },
+          "pre_tags": {
+            "type": "string",
+            "description": "Specifies the markup tags to insert **before** each highlighted term (e.g. \\\"\\<b\\>\\\" or \\\"\\<em\\>\\\"). This can be any string, but is most often an HTML or XML tag.\nOnly used when **highlight_markup** is set to true."
+          },
+          "post_tags": {
+            "type": "string",
+            "description": "Specifies the markup tags to insert **after** each highlighted term. (e.g. \\\"\\<\\/b\\>\\\" or \\\"\\<\\/em\\>\\\"). This can be any string, but is most often an HTML or XML tag.\nOnly used when **highlight_markup** is set to true."
+          }
+        }
+      },
+      "IndexResponseObject": {
+        "type": "object",
+        "required": [
+          "id",
+          "name",
+          "schema",
+          "indexed_doc_count",
+          "committed_doc_count",
+          "operations_count",
+          "query_count",
+          "version",
+          "facets_minmax"
+        ],
+        "properties": {
+          "id": {
+            "type": "integer",
+            "format": "int64",
+            "description": "Index ID",
+            "minimum": 0
+          },
+          "name": {
+            "type": "string",
+            "description": "Index name",
+            "example": "demo_index"
+          },
+          "schema": {
+            "type": "object",
+            "additionalProperties": {
+              "$ref": "#/components/schemas/SchemaField"
+            },
+            "propertyNames": {
+              "type": "string"
+            },
+            "example": {
+              "title": {
+                "field": "title",
+                "store": true,
+                "index_lexical": true,
+                "field_type": "Text",
+                "boost": 10.0,
+                "field_id": 0
+              },
+              "body": {
+                "field": "body",
+                "store": true,
+                "index_lexical": true,
+                "field_type": "Text",
+                "field_id": 1
+              },
+              "url": {
+                "field": "url",
+                "store": true,
+                "index_lexical": false,
+                "field_type": "Text",
+                "field_id": 2
+              },
+              "date": {
+                "field": "date",
+                "store": true,
+                "index_lexical": false,
+                "field_type": "Timestamp",
+                "facet": true,
+                "field_id": 3
+              }
+            }
+          },
+          "indexed_doc_count": {
+            "type": "integer",
+            "description": "Number of indexed documents",
+            "minimum": 0
+          },
+          "committed_doc_count": {
+            "type": "integer",
+            "description": "Number of committed documents",
+            "minimum": 0
+          },
+          "operations_count": {
+            "type": "integer",
+            "format": "int64",
+            "description": "Number of operations: index, update, delete, queries",
+            "minimum": 0
+          },
+          "query_count": {
+            "type": "integer",
+            "format": "int64",
+            "description": "Number of queries, for quotas and billing",
+            "minimum": 0
+          },
+          "version": {
+            "type": "string",
+            "description": "SeekStorm version the index was created with",
+            "example": "0.11.1"
+          },
+          "facets_minmax": {
+            "type": "object",
+            "description": "Minimum and maximum values of numeric facet fields",
+            "additionalProperties": {
+              "$ref": "#/components/schemas/MinMaxFieldJson"
+            },
+            "propertyNames": {
+              "type": "string"
+            },
+            "example": {
+              "date": {
+                "min": 831306011,
+                "max": 1730901447
+              }
+            }
+          }
+        }
+      },
+      "Inference": {
+        "oneOf": [
+          {
+            "type": "object",
+            "description": "Predefined model2vec models, already normalized + dot product = cosine similarity, use the same similarity metric that was used during the training of the embedding model.",
+            "required": [
+              "Model2Vec"
+            ],
+            "properties": {
+              "Model2Vec": {
+                "type": "object",
+                "description": "Predefined model2vec models, already normalized + dot product = cosine similarity, use the same similarity metric that was used during the training of the embedding model.",
+                "required": [
+                  "model",
+                  "chunk_size",
+                  "quantization"
+                ],
+                "properties": {
+                  "model": {
+                    "$ref": "#/components/schemas/Model",
+                    "description": "Predefined model type for embeddings."
+                  },
+                  "chunk_size": {
+                    "type": "integer",
+                    "description": "Chunk size for splitting input text, e.g. 1000 characters. This should be the same chunk size that was used during the training of the embedding model.",
+                    "minimum": 0
+                  },
+                  "quantization": {
+                    "$ref": "#/components/schemas/Quantization",
+                    "description": "Quantization method for embeddings."
+                  }
+                }
+              }
+            }
+          },
+          {
+            "type": "object",
+            "description": "Custom model2vec models, already normalized + dot product = cosine similarity, use the same similarity metric that was used during the training of the embedding model.",
+            "required": [
+              "Model2VecCustom"
+            ],
+            "properties": {
+              "Model2VecCustom": {
+                "type": "object",
+                "description": "Custom model2vec models, already normalized + dot product = cosine similarity, use the same similarity metric that was used during the training of the embedding model.",
+                "required": [
+                  "path",
+                  "chunk_size",
+                  "quantization"
+                ],
+                "properties": {
+                  "path": {
+                    "type": "string",
+                    "description": "Model ID from Hugging Face or local path to model directory, e.g. \"minishlab/potion-base-2M\""
+                  },
+                  "chunk_size": {
+                    "type": "integer",
+                    "description": "Chunk size for splitting input text, e.g. 1000 characters. This should be the same chunk size that was used during the training of the embedding model.",
+                    "minimum": 0
+                  },
+                  "quantization": {
+                    "$ref": "#/components/schemas/Quantization",
+                    "description": "Quantization method for embeddings."
+                  }
+                }
+              }
+            }
+          },
+          {
+            "type": "object",
+            "description": "External inference",
+            "required": [
+              "External"
+            ],
+            "properties": {
+              "External": {
+                "type": "object",
+                "description": "External inference",
+                "required": [
+                  "dimensions",
+                  "precision",
+                  "quantization",
+                  "similarity"
+                ],
+                "properties": {
+                  "dimensions": {
+                    "type": "integer",
+                    "description": "Number of dimensions for the embeddings.",
+                    "minimum": 0
+                  },
+                  "precision": {
+                    "$ref": "#/components/schemas/Precision",
+                    "description": "Data type for embeddings."
+                  },
+                  "quantization": {
+                    "$ref": "#/components/schemas/Quantization",
+                    "description": "Quantization method for embeddings."
+                  },
+                  "similarity": {
+                    "$ref": "#/components/schemas/VectorSimilarity",
+                    "description": "Similarity metric to use for comparing embeddings, e.g. cosine similarity or euclidean distance.\nThis should be the same similarity metric that was used during the training of the embedding model."
+                  }
+                }
+              }
+            }
+          },
+          {
+            "type": "string",
+            "description": "No inference",
+            "enum": [
+              "None"
+            ]
+          }
+        ],
+        "description": "Inference type, to transform input text into vector embeddings.\nThis can be a predefined model2vec model, a custom model2vec model, an external inference, or no inference."
+      },
+      "IteratorResult": {
+        "type": "object",
+        "description": "Iterator",
+        "required": [
+          "skip",
+          "results"
+        ],
+        "properties": {
+          "skip": {
+            "type": "integer",
+            "description": "number of actually skipped documents",
+            "minimum": 0
+          },
+          "results": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/IteratorResultItem"
+            },
+            "description": "document IDs, and optionally the documents themselves"
+          }
+        }
+      },
+      "IteratorResultItem": {
+        "type": "object",
+        "description": "Iterator result",
+        "required": [
+          "doc_id"
+        ],
+        "properties": {
+          "doc_id": {
+            "type": "integer",
+            "format": "int64",
+            "description": "document ID",
+            "minimum": 0
+          },
+          "doc": {
+            "type": [
+              "object",
+              "null"
+            ],
+            "description": "document",
+            "additionalProperties": {},
+            "propertyNames": {
+              "type": "string"
+            }
+          }
+        }
+      },
+      "LexicalSimilarity": {
+        "type": "string",
+        "description": "Similarity type defines the scoring and ranking of the search results:\n- Bm25f: considers documents composed from several fields, with different field lengths and importance\n- Bm25fProximity: considers term proximity, e.g. for implicit phrase search with improved relevancy",
+        "enum": [
+          "Bm25f",
+          "Bm25fProximity"
+        ]
+      },
+      "MinMaxFieldJson": {
+        "type": "object",
+        "description": "MinMaxFieldJson is a JSON representation of the minimum and maximum value of a field.",
+        "required": [
+          "min",
+          "max"
+        ],
+        "properties": {
+          "min": {
+            "description": "minimum value of the field"
+          },
+          "max": {
+            "description": "maximum value of the field"
+          }
+        }
+      },
+      "Model": {
+        "type": "string",
+        "description": "Predefined model type for embeddings.",
+        "enum": [
+          "PotionBase32M",
+          "PotionMultilingual128M",
+          "PotionRetrieval32M",
+          "PotionBase8M",
+          "PotionBase4M",
+          "PotionBase2M"
+        ]
+      },
+      "Precision": {
+        "type": "string",
+        "description": "Vector precision",
+        "enum": [
+          "None",
+          "F32",
+          "I8"
+        ]
+      },
+      "Quantization": {
+        "type": "string",
+        "description": "Quantization method for embeddings.",
+        "enum": [
+          "I8",
+          "None"
+        ]
+      },
+      "QueryCompletion": {
+        "type": "object",
+        "description": "Defines spelling correction (fuzzy search) settings for an index.",
+        "required": [
+          "max_completion_entries"
+        ],
+        "properties": {
+          "max_completion_entries": {
+            "type": "integer",
+            "description": "Maximum number of completions to generate during indexing\ndisabled if == 0",
+            "minimum": 0
+          }
+        }
+      },
+      "QueryFacet": {
+        "oneOf": [
+          {
+            "type": "object",
+            "description": "Range segment definition for numerical facet field values of type u8",
+            "required": [
+              "U8"
+            ],
+            "properties": {
+              "U8": {
+                "type": "object",
+                "description": "Range segment definition for numerical facet field values of type u8",
+                "required": [
+                  "field",
+                  "range_type",
+                  "ranges"
+                ],
+                "properties": {
+                  "field": {
+                    "type": "string",
+                    "description": "field name"
+                  },
+                  "range_type": {
+                    "$ref": "#/components/schemas/RangeType",
+                    "description": "range type (CountWithinRange,CountBelowRange,CountAboveRange)"
+                  },
+                  "ranges": {
+                    "type": "array",
+                    "items": {
+                      "type": "array",
+                      "items": false,
+                      "prefixItems": [
+                        {
+                          "type": "string"
+                        },
+                        {
+                          "type": "integer",
+                          "format": "int32",
+                          "minimum": 0
+                        }
+                      ]
+                    },
+                    "description": "range label, range start"
+                  }
+                }
+              }
+            }
+          },
+          {
+            "type": "object",
+            "description": "Range segment definition for numerical facet field values of type u16",
+            "required": [
+              "U16"
+            ],
+            "properties": {
+              "U16": {
+                "type": "object",
+                "description": "Range segment definition for numerical facet field values of type u16",
+                "required": [
+                  "field",
+                  "range_type",
+                  "ranges"
+                ],
+                "properties": {
+                  "field": {
+                    "type": "string",
+                    "description": "field name"
+                  },
+                  "range_type": {
+                    "$ref": "#/components/schemas/RangeType",
+                    "description": "range type (CountWithinRange,CountBelowRange,CountAboveRange)"
+                  },
+                  "ranges": {
+                    "type": "array",
+                    "items": {
+                      "type": "array",
+                      "items": false,
+                      "prefixItems": [
+                        {
+                          "type": "string"
+                        },
+                        {
+                          "type": "integer",
+                          "format": "int32",
+                          "minimum": 0
+                        }
+                      ]
+                    },
+                    "description": "range label, range start"
+                  }
+                }
+              }
+            }
+          },
+          {
+            "type": "object",
+            "description": "Range segment definition for numerical facet field values of type u32",
+            "required": [
+              "U32"
+            ],
+            "properties": {
+              "U32": {
+                "type": "object",
+                "description": "Range segment definition for numerical facet field values of type u32",
+                "required": [
+                  "field",
+                  "range_type",
+                  "ranges"
+                ],
+                "properties": {
+                  "field": {
+                    "type": "string",
+                    "description": "field name"
+                  },
+                  "range_type": {
+                    "$ref": "#/components/schemas/RangeType",
+                    "description": "range type (CountWithinRange,CountBelowRange,CountAboveRange)"
+                  },
+                  "ranges": {
+                    "type": "array",
+                    "items": {
+                      "type": "array",
+                      "items": false,
+                      "prefixItems": [
+                        {
+                          "type": "string"
+                        },
+                        {
+                          "type": "integer",
+                          "format": "int32",
+                          "minimum": 0
+                        }
+                      ]
+                    },
+                    "description": "range label, range start"
+                  }
+                }
+              }
+            }
+          },
+          {
+            "type": "object",
+            "description": "Range segment definition for numerical facet field values of type u64",
+            "required": [
+              "U64"
+            ],
+            "properties": {
+              "U64": {
+                "type": "object",
+                "description": "Range segment definition for numerical facet field values of type u64",
+                "required": [
+                  "field",
+                  "range_type",
+                  "ranges"
+                ],
+                "properties": {
+                  "field": {
+                    "type": "string",
+                    "description": "field name"
+                  },
+                  "range_type": {
+                    "$ref": "#/components/schemas/RangeType",
+                    "description": "range type (CountWithinRange,CountBelowRange,CountAboveRange)"
+                  },
+                  "ranges": {
+                    "type": "array",
+                    "items": {
+                      "type": "array",
+                      "items": false,
+                      "prefixItems": [
+                        {
+                          "type": "string"
+                        },
+                        {
+                          "type": "integer",
+                          "format": "int64",
+                          "minimum": 0
+                        }
+                      ]
+                    },
+                    "description": "range label, range start"
+                  }
+                }
+              }
+            }
+          },
+          {
+            "type": "object",
+            "description": "Range segment definition for numerical facet field values of type i8",
+            "required": [
+              "I8"
+            ],
+            "properties": {
+              "I8": {
+                "type": "object",
+                "description": "Range segment definition for numerical facet field values of type i8",
+                "required": [
+                  "field",
+                  "range_type",
+                  "ranges"
+                ],
+                "properties": {
+                  "field": {
+                    "type": "string",
+                    "description": "field name"
+                  },
+                  "range_type": {
+                    "$ref": "#/components/schemas/RangeType",
+                    "description": "range type (CountWithinRange,CountBelowRange,CountAboveRange)"
+                  },
+                  "ranges": {
+                    "type": "array",
+                    "items": {
+                      "type": "array",
+                      "items": false,
+                      "prefixItems": [
+                        {
+                          "type": "string"
+                        },
+                        {
+                          "type": "integer",
+                          "format": "int32"
+                        }
+                      ]
+                    },
+                    "description": "range label, range start"
+                  }
+                }
+              }
+            }
+          },
+          {
+            "type": "object",
+            "description": "Range segment definition for numerical facet field values of type i16",
+            "required": [
+              "I16"
+            ],
+            "properties": {
+              "I16": {
+                "type": "object",
+                "description": "Range segment definition for numerical facet field values of type i16",
+                "required": [
+                  "field",
+                  "range_type",
+                  "ranges"
+                ],
+                "properties": {
+                  "field": {
+                    "type": "string",
+                    "description": "field name"
+                  },
+                  "range_type": {
+                    "$ref": "#/components/schemas/RangeType",
+                    "description": "range type (CountWithinRange,CountBelowRange,CountAboveRange)"
+                  },
+                  "ranges": {
+                    "type": "array",
+                    "items": {
+                      "type": "array",
+                      "items": false,
+                      "prefixItems": [
+                        {
+                          "type": "string"
+                        },
+                        {
+                          "type": "integer",
+                          "format": "int32"
+                        }
+                      ]
+                    },
+                    "description": "range label, range start"
+                  }
+                }
+              }
+            }
+          },
+          {
+            "type": "object",
+            "description": "Range segment definition for numerical facet field values of type i32",
+            "required": [
+              "I32"
+            ],
+            "properties": {
+              "I32": {
+                "type": "object",
+                "description": "Range segment definition for numerical facet field values of type i32",
+                "required": [
+                  "field",
+                  "range_type",
+                  "ranges"
+                ],
+                "properties": {
+                  "field": {
+                    "type": "string",
+                    "description": "field name"
+                  },
+                  "range_type": {
+                    "$ref": "#/components/schemas/RangeType",
+                    "description": "range type (CountWithinRange,CountBelowRange,CountAboveRange)"
+                  },
+                  "ranges": {
+                    "type": "array",
+                    "items": {
+                      "type": "array",
+                      "items": false,
+                      "prefixItems": [
+                        {
+                          "type": "string"
+                        },
+                        {
+                          "type": "integer",
+                          "format": "int32"
+                        }
+                      ]
+                    },
+                    "description": "range label, range start"
+                  }
+                }
+              }
+            }
+          },
+          {
+            "type": "object",
+            "description": "Range segment definition for numerical facet field values of type i64",
+            "required": [
+              "I64"
+            ],
+            "properties": {
+              "I64": {
+                "type": "object",
+                "description": "Range segment definition for numerical facet field values of type i64",
+                "required": [
+                  "field",
+                  "range_type",
+                  "ranges"
+                ],
+                "properties": {
+                  "field": {
+                    "type": "string",
+                    "description": "field name"
+                  },
+                  "range_type": {
+                    "$ref": "#/components/schemas/RangeType",
+                    "description": "range type (CountWithinRange,CountBelowRange,CountAboveRange)"
+                  },
+                  "ranges": {
+                    "type": "array",
+                    "items": {
+                      "type": "array",
+                      "items": false,
+                      "prefixItems": [
+                        {
+                          "type": "string"
+                        },
+                        {
+                          "type": "integer",
+                          "format": "int64"
+                        }
+                      ]
+                    },
+                    "description": "range label, range start"
+                  }
+                }
+              }
+            }
+          },
+          {
+            "type": "object",
+            "description": "Range segment definition for numerical facet field values of type Unix timestamp",
+            "required": [
+              "Timestamp"
+            ],
+            "properties": {
+              "Timestamp": {
+                "type": "object",
+                "description": "Range segment definition for numerical facet field values of type Unix timestamp",
+                "required": [
+                  "field",
+                  "range_type",
+                  "ranges"
+                ],
+                "properties": {
+                  "field": {
+                    "type": "string",
+                    "description": "field name"
+                  },
+                  "range_type": {
+                    "$ref": "#/components/schemas/RangeType",
+                    "description": "range type (CountWithinRange,CountBelowRange,CountAboveRange)"
+                  },
+                  "ranges": {
+                    "type": "array",
+                    "items": {
+                      "type": "array",
+                      "items": false,
+                      "prefixItems": [
+                        {
+                          "type": "string"
+                        },
+                        {
+                          "type": "integer",
+                          "format": "int64"
+                        }
+                      ]
+                    },
+                    "description": "range label, range start"
+                  }
+                }
+              }
+            }
+          },
+          {
+            "type": "object",
+            "description": "Range segment definition for numerical facet field values of type f32",
+            "required": [
+              "F32"
+            ],
+            "properties": {
+              "F32": {
+                "type": "object",
+                "description": "Range segment definition for numerical facet field values of type f32",
+                "required": [
+                  "field",
+                  "range_type",
+                  "ranges"
+                ],
+                "properties": {
+                  "field": {
+                    "type": "string",
+                    "description": "field name"
+                  },
+                  "range_type": {
+                    "$ref": "#/components/schemas/RangeType",
+                    "description": "range type (CountWithinRange,CountBelowRange,CountAboveRange)"
+                  },
+                  "ranges": {
+                    "type": "array",
+                    "items": {
+                      "type": "array",
+                      "items": false,
+                      "prefixItems": [
+                        {
+                          "type": "string"
+                        },
+                        {
+                          "type": "number",
+                          "format": "float"
+                        }
+                      ]
+                    },
+                    "description": "range label, range start"
+                  }
+                }
+              }
+            }
+          },
+          {
+            "type": "object",
+            "description": "Range segment definition for numerical facet field values of type f64",
+            "required": [
+              "F64"
+            ],
+            "properties": {
+              "F64": {
+                "type": "object",
+                "description": "Range segment definition for numerical facet field values of type f64",
+                "required": [
+                  "field",
+                  "range_type",
+                  "ranges"
+                ],
+                "properties": {
+                  "field": {
+                    "type": "string",
+                    "description": "field name"
+                  },
+                  "range_type": {
+                    "$ref": "#/components/schemas/RangeType",
+                    "description": "range type (CountWithinRange,CountBelowRange,CountAboveRange)"
+                  },
+                  "ranges": {
+                    "type": "array",
+                    "items": {
+                      "type": "array",
+                      "items": false,
+                      "prefixItems": [
+                        {
+                          "type": "string"
+                        },
+                        {
+                          "type": "number",
+                          "format": "double"
+                        }
+                      ]
+                    },
+                    "description": "range label, range start"
+                  }
+                }
+              }
+            }
+          },
+          {
+            "type": "object",
+            "description": "Facet field values of type string",
+            "required": [
+              "String16"
+            ],
+            "properties": {
+              "String16": {
+                "type": "object",
+                "description": "Facet field values of type string",
+                "required": [
+                  "field",
+                  "prefix",
+                  "length"
+                ],
+                "properties": {
+                  "field": {
+                    "type": "string",
+                    "description": "field name"
+                  },
+                  "prefix": {
+                    "type": "string",
+                    "description": "Prefix filter of facet values to return"
+                  },
+                  "length": {
+                    "type": "integer",
+                    "format": "int32",
+                    "description": "maximum number of facet values to return",
+                    "minimum": 0
+                  }
+                }
+              }
+            }
+          },
+          {
+            "type": "object",
+            "description": "Facet field values of type string",
+            "required": [
+              "String32"
+            ],
+            "properties": {
+              "String32": {
+                "type": "object",
+                "description": "Facet field values of type string",
+                "required": [
+                  "field",
+                  "prefix",
+                  "length"
+                ],
+                "properties": {
+                  "field": {
+                    "type": "string",
+                    "description": "field name"
+                  },
+                  "prefix": {
+                    "type": "string",
+                    "description": "Prefix filter of facet values to return"
+                  },
+                  "length": {
+                    "type": "integer",
+                    "format": "int32",
+                    "description": "maximum number of facet values to return",
+                    "minimum": 0
+                  }
+                }
+              }
+            }
+          },
+          {
+            "type": "object",
+            "description": "Facet field values of type string set",
+            "required": [
+              "StringSet16"
+            ],
+            "properties": {
+              "StringSet16": {
+                "type": "object",
+                "description": "Facet field values of type string set",
+                "required": [
+                  "field",
+                  "prefix",
+                  "length"
+                ],
+                "properties": {
+                  "field": {
+                    "type": "string",
+                    "description": "field name"
+                  },
+                  "prefix": {
+                    "type": "string",
+                    "description": "Prefix filter of facet values to return"
+                  },
+                  "length": {
+                    "type": "integer",
+                    "format": "int32",
+                    "description": "maximum number of facet values to return",
+                    "minimum": 0
+                  }
+                }
+              }
+            }
+          },
+          {
+            "type": "object",
+            "description": "Facet field values of type string set",
+            "required": [
+              "StringSet32"
+            ],
+            "properties": {
+              "StringSet32": {
+                "type": "object",
+                "description": "Facet field values of type string set",
+                "required": [
+                  "field",
+                  "prefix",
+                  "length"
+                ],
+                "properties": {
+                  "field": {
+                    "type": "string",
+                    "description": "field name"
+                  },
+                  "prefix": {
+                    "type": "string",
+                    "description": "Prefix filter of facet values to return"
+                  },
+                  "length": {
+                    "type": "integer",
+                    "format": "int32",
+                    "description": "maximum number of facet values to return",
+                    "minimum": 0
+                  }
+                }
+              }
+            }
+          },
+          {
+            "type": "object",
+            "description": "Range segment definition for numerical facet field values of type Point (distance between base of type Point and facet field of type Point)",
+            "required": [
+              "Point"
+            ],
+            "properties": {
+              "Point": {
+                "type": "object",
+                "description": "Range segment definition for numerical facet field values of type Point (distance between base of type Point and facet field of type Point)",
+                "required": [
+                  "field",
+                  "range_type",
+                  "ranges",
+                  "base",
+                  "unit"
+                ],
+                "properties": {
+                  "field": {
+                    "type": "string",
+                    "description": "field name"
+                  },
+                  "range_type": {
+                    "$ref": "#/components/schemas/RangeType",
+                    "description": "range type (CountWithinRange,CountBelowRange,CountAboveRange)"
+                  },
+                  "ranges": {
+                    "type": "array",
+                    "items": {
+                      "type": "array",
+                      "items": false,
+                      "prefixItems": [
+                        {
+                          "type": "string"
+                        },
+                        {
+                          "type": "number",
+                          "format": "double"
+                        }
+                      ]
+                    },
+                    "description": "range label, range start"
+                  },
+                  "base": {
+                    "$ref": "#/components/schemas/Vec",
+                    "description": "base point (latitude/lat, longitude/lon)"
+                  },
+                  "unit": {
+                    "$ref": "#/components/schemas/DistanceUnit",
+                    "description": "distance unit (kilometers/miles)"
+                  }
+                }
+              }
+            }
+          },
+          {
+            "type": "string",
+            "description": "No query facet",
+            "enum": [
+              "None"
+            ]
+          }
+        ],
+        "description": "Defines the query facets:\n- string facet field values\n- range segments for numerical facet field values"
+      },
+      "QueryRewriting": {
+        "oneOf": [
+          {
+            "type": "string",
+            "description": "Query rewriting disabled, returns query results for query as-is, returns no suggestions for corrected or completed query.\nNo performance overhead for spelling correction and suggestions.",
+            "enum": [
+              "SearchOnly"
+            ]
+          },
+          {
+            "type": "object",
+            "description": "Query rewriting disabled, returns query results for original query string, returns suggestions for corrected or completed query.\nAdditional latency for spelling suggestions.",
+            "required": [
+              "SearchSuggest"
+            ],
+            "properties": {
+              "SearchSuggest": {
+                "type": "object",
+                "description": "Query rewriting disabled, returns query results for original query string, returns suggestions for corrected or completed query.\nAdditional latency for spelling suggestions.",
+                "required": [
+                  "distance"
+                ],
+                "properties": {
+                  "correct": {
+                    "type": [
+                      "integer",
+                      "null"
+                    ],
+                    "description": "Enable query correction, for queries with query string length >= threshold\nA minimum length of 2 is advised to prevent irrelevant suggestions and results.",
+                    "minimum": 0
+                  },
+                  "distance": {
+                    "type": "integer",
+                    "description": "The edit distance thresholds for suggestions: 1..2 recommended; higher values increase latency and memory consumption.",
+                    "minimum": 0
+                  },
+                  "term_length_threshold": {
+                    "type": [
+                      "array",
+                      "null"
+                    ],
+                    "items": {
+                      "type": "integer",
+                      "minimum": 0
+                    },
+                    "description": "Term length thresholds for each edit distance.\n  None:    max_dictionary_edit_distance for all terms lengths\n  Some(\\[4\\]):    max_dictionary_edit_distance for all terms lengths >= 4,\n  Some(\\[2,8\\]):    max_dictionary_edit_distance for all terms lengths >=2, max_dictionary_edit_distance +1 for all terms for lengths>=8"
+                  },
+                  "complete": {
+                    "type": [
+                      "integer",
+                      "null"
+                    ],
+                    "description": "Enable query completions, for queries with query string length >= threshold, in addition to spelling corrections\nA minimum length of 2 is advised to prevent irrelevant suggestions and results.",
+                    "minimum": 0
+                  },
+                  "length": {
+                    "type": [
+                      "integer",
+                      "null"
+                    ],
+                    "description": "An option to limit maximum number of returned suggestions.",
+                    "minimum": 0
+                  }
+                }
+              }
+            }
+          },
+          {
+            "type": "object",
+            "description": "Query rewriting enabled, returns query results for spelling corrected or completed query string (=instant search), returns suggestions for corrected or completed query.\nAdditional latency for spelling correction and suggestions.",
+            "required": [
+              "SearchRewrite"
+            ],
+            "properties": {
+              "SearchRewrite": {
+                "type": "object",
+                "description": "Query rewriting enabled, returns query results for spelling corrected or completed query string (=instant search), returns suggestions for corrected or completed query.\nAdditional latency for spelling correction and suggestions.",
+                "required": [
+                  "distance"
+                ],
+                "properties": {
+                  "correct": {
+                    "type": [
+                      "integer",
+                      "null"
+                    ],
+                    "description": "Enable query correction, for queries with query string length >= threshold\nA minimum length of 2 is advised to prevent irrelevant suggestions and results.",
+                    "minimum": 0
+                  },
+                  "distance": {
+                    "type": "integer",
+                    "description": "The edit distance thresholds for suggestions: 1..2 recommended; higher values increase latency and memory consumption.",
+                    "minimum": 0
+                  },
+                  "term_length_threshold": {
+                    "type": [
+                      "array",
+                      "null"
+                    ],
+                    "items": {
+                      "type": "integer",
+                      "minimum": 0
+                    },
+                    "description": "Term length thresholds for each edit distance.\n  None:    max_dictionary_edit_distance for all terms lengths\n  Some(\\[4\\]):    max_dictionary_edit_distance for all terms lengths >= 4,\n  Some(\\[2,8\\])    max_dictionary_edit_distance for all terms lengths >=2, max_dictionary_edit_distance +1 for all terms for lengths>=8"
+                  },
+                  "complete": {
+                    "type": [
+                      "integer",
+                      "null"
+                    ],
+                    "description": "Enable query completions, for queries with query string length >= threshold, in addition to spelling corrections\nA minimum length of 2 is advised to prevent irrelevant suggestions and results.",
+                    "minimum": 0
+                  },
+                  "length": {
+                    "type": [
+                      "integer",
+                      "null"
+                    ],
+                    "description": "An option to limit maximum number of returned suggestions.",
+                    "minimum": 0
+                  }
+                }
+              }
+            }
+          },
+          {
+            "type": "object",
+            "description": "Search disabled, returns no query results, only returns suggestions for corrected or completed query.",
+            "required": [
+              "SuggestOnly"
+            ],
+            "properties": {
+              "SuggestOnly": {
+                "type": "object",
+                "description": "Search disabled, returns no query results, only returns suggestions for corrected or completed query.",
+                "required": [
+                  "distance"
+                ],
+                "properties": {
+                  "correct": {
+                    "type": [
+                      "integer",
+                      "null"
+                    ],
+                    "description": "Enable query correction, for queries with query string length >= threshold\nA minimum length of 2 is advised to prevent irrelevant suggestions and results.",
+                    "minimum": 0
+                  },
+                  "distance": {
+                    "type": "integer",
+                    "description": "The edit distance thresholds for suggestions: 1..2 recommended; higher values increase latency and memory consumption.",
+                    "minimum": 0
+                  },
+                  "term_length_threshold": {
+                    "type": [
+                      "array",
+                      "null"
+                    ],
+                    "items": {
+                      "type": "integer",
+                      "minimum": 0
+                    },
+                    "description": "Term length thresholds for each edit distance.\n  None:    max_dictionary_edit_distance for all terms lengths\n  Some(\\[4\\]):    max_dictionary_edit_distance for all terms lengths >= 4,\n  Some(\\[2,8\\]):    max_dictionary_edit_distance for all terms lengths >=2, max_dictionary_edit_distance +1 for all terms for lengths>=8"
+                  },
+                  "complete": {
+                    "type": [
+                      "integer",
+                      "null"
+                    ],
+                    "description": "Enable query completions, for queries with query string length >= threshold, in addition to spelling corrections\nA minimum length of 2 is advised to prevent irrelevant suggestions and results.",
+                    "minimum": 0
+                  },
+                  "length": {
+                    "type": [
+                      "integer",
+                      "null"
+                    ],
+                    "description": "An option to limit maximum number of returned suggestions.",
+                    "minimum": 0
+                  }
+                }
+              }
+            }
+          }
+        ],
+        "description": "Specifies whether query rewriting is enabled or disabled"
+      },
+      "QueryType": {
+        "type": "string",
+        "description": "Specifies the default QueryType: The following query types are supported:\n- **Union** (OR, disjunction),\n- **Intersection** (AND, conjunction),\n- **Phrase** (\"\"),\n- **Not** (-).\n\nThe default QueryType is superseded if the query parser detects that a different query type is specified within the query string (+ - \"\").\n",
+        "enum": [
+          "Union",
+          "Intersection",
+          "Phrase",
+          "Not"
+        ]
+      },
+      "RangeF32": {
+        "type": "object",
+        "description": "F32 range filter",
+        "required": [
+          "start",
+          "end"
+        ],
+        "properties": {
+          "start": {
+            "type": "number",
+            "format": "float",
+            "description": "range start"
+          },
+          "end": {
+            "type": "number",
+            "format": "float",
+            "description": "range end"
+          }
+        }
+      },
+      "RangeF64": {
+        "type": "object",
+        "description": "F64 range filter",
+        "required": [
+          "start",
+          "end"
+        ],
+        "properties": {
+          "start": {
+            "type": "number",
+            "format": "double",
+            "description": "range start"
+          },
+          "end": {
+            "type": "number",
+            "format": "double",
+            "description": "range end"
+          }
+        }
+      },
+      "RangeI16": {
+        "type": "object",
+        "description": "I16 range filter",
+        "required": [
+          "start",
+          "end"
+        ],
+        "properties": {
+          "start": {
+            "type": "integer",
+            "format": "int32",
+            "description": "range start"
+          },
+          "end": {
+            "type": "integer",
+            "format": "int32",
+            "description": "range end"
+          }
+        }
+      },
+      "RangeI32": {
+        "type": "object",
+        "description": "I32 range filter",
+        "required": [
+          "start",
+          "end"
+        ],
+        "properties": {
+          "start": {
+            "type": "integer",
+            "format": "int32",
+            "description": "range start"
+          },
+          "end": {
+            "type": "integer",
+            "format": "int32",
+            "description": "range end"
+          }
+        }
+      },
+      "RangeI64": {
+        "type": "object",
+        "description": "I64 range filter",
+        "required": [
+          "start",
+          "end"
+        ],
+        "properties": {
+          "start": {
+            "type": "integer",
+            "format": "int64",
+            "description": "range start"
+          },
+          "end": {
+            "type": "integer",
+            "format": "int64",
+            "description": "range end"
+          }
+        }
+      },
+      "RangeI8": {
+        "type": "object",
+        "description": "I8 range filter",
+        "required": [
+          "start",
+          "end"
+        ],
+        "properties": {
+          "start": {
+            "type": "integer",
+            "format": "int32",
+            "description": "range start"
+          },
+          "end": {
+            "type": "integer",
+            "format": "int32",
+            "description": "range end"
+          }
+        }
+      },
+      "RangeType": {
+        "type": "string",
+        "description": "Create query_list and non_unique_query_list\nblockwise intersection : if the corresponding blocks with a 65k docid range for each term have at least a single docid,\nthen the intersect_docid within a single block is executed  (=segments?)\nspecifies how to count the frequency of numerical facet field values",
+        "enum": [
+          "CountWithinRange",
+          "CountAboveRange",
+          "CountBelowRange"
+        ]
+      },
+      "RangeU16": {
+        "type": "object",
+        "description": "U16 range filter",
+        "required": [
+          "start",
+          "end"
+        ],
+        "properties": {
+          "start": {
+            "type": "integer",
+            "format": "int32",
+            "description": "range start",
+            "minimum": 0
+          },
+          "end": {
+            "type": "integer",
+            "format": "int32",
+            "description": "range end",
+            "minimum": 0
+          }
+        }
+      },
+      "RangeU32": {
+        "type": "object",
+        "description": "U32 range filter",
+        "required": [
+          "start",
+          "end"
+        ],
+        "properties": {
+          "start": {
+            "type": "integer",
+            "format": "int32",
+            "description": "range start",
+            "minimum": 0
+          },
+          "end": {
+            "type": "integer",
+            "format": "int32",
+            "description": "range end",
+            "minimum": 0
+          }
+        }
+      },
+      "RangeU64": {
+        "type": "object",
+        "description": "U64 range filter",
+        "required": [
+          "start",
+          "end"
+        ],
+        "properties": {
+          "start": {
+            "type": "integer",
+            "format": "int64",
+            "description": "range start",
+            "minimum": 0
+          },
+          "end": {
+            "type": "integer",
+            "format": "int64",
+            "description": "range end",
+            "minimum": 0
+          }
+        }
+      },
+      "RangeU8": {
+        "type": "object",
+        "description": "U8 range filter",
+        "required": [
+          "start",
+          "end"
+        ],
+        "properties": {
+          "start": {
+            "type": "integer",
+            "format": "int32",
+            "description": "range start",
+            "minimum": 0
+          },
+          "end": {
+            "type": "integer",
+            "format": "int32",
+            "description": "range end",
+            "minimum": 0
+          }
+        }
+      },
+      "ResultSort": {
+        "type": "object",
+        "description": "Specifies the sort order for the search results.",
+        "required": [
+          "field",
+          "order",
+          "base"
+        ],
+        "properties": {
+          "field": {
+            "type": "string",
+            "description": "name of the facet field to sort by"
+          },
+          "order": {
+            "$ref": "#/components/schemas/SortOrder",
+            "description": "Sort order: Ascending or Descending"
+          },
+          "base": {
+            "$ref": "#/components/schemas/FacetValue",
+            "description": "Base value/point for (geo) proximity sorting"
+          }
+        }
+      },
+      "ResultType": {
+        "type": "string",
+        "description": "The following result types are supported:\n- **Count** (count all results that match the query, but returning top-k results is not required)\n- **Topk** (returns the top-k results per query, but counting all results that match the query is not required)\n- **TopkCount** (returns the top-k results per query + count all results that match the query)",
+        "enum": [
+          "Count",
+          "Topk",
+          "TopkCount"
+        ]
+      },
+      "SchemaField": {
+        "type": "object",
+        "description": "Defines a field in index schema: field, stored, indexed , field_type, facet, boost.",
+        "required": [
+          "field",
+          "store",
+          "index_lexical",
+          "field_type"
+        ],
+        "properties": {
+          "field": {
+            "type": "string",
+            "description": "unique name of a field"
+          },
+          "store": {
+            "type": "boolean",
+            "description": "only stored fields are returned in the search results"
+          },
+          "index_lexical": {
+            "type": "boolean",
+            "description": "only indexed fields can be searched"
+          },
+          "index_vector": {
+            "type": "boolean",
+            "description": "only indexed fields can be searched"
+          },
+          "field_type": {
+            "$ref": "#/components/schemas/FieldType",
+            "description": "type of a field"
+          },
+          "facet": {
+            "type": "boolean",
+            "description": "optional faceting for a field\nFaceting can be enabled both for string field type and numerical field types.\nboth numerical and string fields can be indexed (indexed=true) and stored (stored=true) in the json document,\nbut with field_facet=true they are additionally stored in a binary format, for fast faceting and sorting without docstore access (decompression, deserialization)"
+          },
+          "longest": {
+            "type": "boolean",
+            "description": "Indicate the longest field in schema.\nOtherwise the longest field will be automatically detected in first index_document.\nSetting/detecting the longest field ensures efficient index encoding."
+          },
+          "boost": {
+            "type": "number",
+            "format": "float",
+            "description": "optional custom weight factor for Bm25 ranking"
+          },
+          "dictionary_source": {
+            "type": "boolean",
+            "description": "if both indexed=true and dictionary_source=true then the terms from this field are added to dictionary to the spelling correction dictionary.\nif disabled, then a manually generated dictionary can be used: {index_path}/dictionary.csv"
+          },
+          "completion_source": {
+            "type": "boolean",
+            "description": "if both indexed=true and completion_source=true then the n-grams (unigrams, bigrams, trigrams) from this field are added to the auto-completion list.\nif disabled, then a manually generated completion list can be used: {index_path}/completions.csv\nit is recommended to enable completion_source only for fields that contain short text with high-quality terms for auto-completion, e.g. title, author, category, product name, tags,\nin order to keep the extraction time and RAM requirement for completions low and the completions relevance high."
+          }
+        }
+      },
+      "SearchMode": {
+        "oneOf": [
+          {
+            "type": "string",
+            "description": "Lexical search mode: Search results are retrieved based on exact matches of query terms with the indexed terms.",
+            "enum": [
+              "Lexical"
+            ]
+          },
+          {
+            "type": "object",
+            "description": "Vector search mode: Search results are retrieved based on the similarity of query vectors with the indexed vectors.",
+            "required": [
+              "Vector"
+            ],
+            "properties": {
+              "Vector": {
+                "type": "object",
+                "description": "Vector search mode: Search results are retrieved based on the similarity of query vectors with the indexed vectors.",
+                "required": [
+                  "ann_mode"
+                ],
+                "properties": {
+                  "similarity_threshold": {
+                    "type": [
+                      "number",
+                      "null"
+                    ],
+                    "format": "float",
+                    "description": "Include only vectors with similarity scores above the specified threshold\nFor dot product similarity, the similarity threshold should be between 0.0 and 1.0, where higher values indicate higher similarity (identical=1.0).\nFor Euclidean distance similarity, the similarity threshold should be between 0.0 and infinity, where lower values indicate higher similarity (identical=0.0)."
+                  },
+                  "ann_mode": {
+                    "$ref": "#/components/schemas/AnnMode",
+                    "description": "Specifies in which clusters to search for ANN results."
+                  }
+                }
+              }
+            }
+          },
+          {
+            "type": "object",
+            "description": "Hybrid search mode: Search results are retrieved based on a combination of lexical and vector search.\nThe relevance score of search results is calculated based on RRF (Reciprocal Rank Fusion) of the result positions in lexical and vector search.",
+            "required": [
+              "Hybrid"
+            ],
+            "properties": {
+              "Hybrid": {
+                "type": "object",
+                "description": "Hybrid search mode: Search results are retrieved based on a combination of lexical and vector search.\nThe relevance score of search results is calculated based on RRF (Reciprocal Rank Fusion) of the result positions in lexical and vector search.",
+                "required": [
+                  "ann_mode"
+                ],
+                "properties": {
+                  "similarity_threshold": {
+                    "type": [
+                      "number",
+                      "null"
+                    ],
+                    "format": "float",
+                    "description": "optional threshold to filter out low similarity scores\nFor dot product similarity, the similarity threshold should be between 0.0 and 1.0, where higher values indicate higher similarity (identical=1.0).\nFor Euclidean distance similarity, the similarity threshold should be between 0.0 and infinity, where lower values indicate higher similarity (identical=0.0)."
+                  },
+                  "ann_mode": {
+                    "$ref": "#/components/schemas/AnnMode",
+                    "description": "Specifies in which clusters to search for ANN results."
+                  }
+                }
+              }
+            }
+          }
+        ],
+        "description": "Specifies the default QueryMode: The following query modes are supported:"
+      },
+      "SearchRequestObject": {
+        "type": "object",
+        "description": "Search request object",
+        "required": [
+          "query"
+        ],
+        "properties": {
+          "query": {
+            "type": "string",
+            "description": "Query string, search operators + - \"\" are recognized."
+          },
+          "query_vector": {
+            "description": "Optional query vector: If None, then the query vector is derived from the query string using the specified model. If Some, then the query vector is used for semantic search and the query string is only used for lexical search and highlighting."
+          },
+          "enable_empty_query": {
+            "type": "boolean",
+            "description": "Enable empty query: if true, an empty query string iterates through all indexed documents, supporting the query parameters: offset, length, query_facets, facet_filter, result_sort,\notherwise an empty query string returns no results.\nTypical use cases include index browsing, index export, conversion, analytics, audits, and inspection.",
+            "default": false,
+            "example": false
+          },
+          "offset": {
+            "type": "integer",
+            "description": "Offset of search results to return.",
+            "default": 0,
+            "example": 0,
+            "minimum": 0
+          },
+          "length": {
+            "type": "integer",
+            "description": "Number of search results to return.",
+            "default": 10,
+            "example": 10,
+            "minimum": 1
+          },
+          "result_type": {
+            "$ref": "#/components/schemas/ResultType"
+          },
+          "realtime": {
+            "type": "boolean",
+            "description": "True realtime search: include indexed, but uncommitted documents into search results."
+          },
+          "highlights": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/Highlight"
+            }
+          },
+          "field_filter": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            },
+            "description": "Specify field names where to search at querytime, whereas SchemaField.indexed is set at indextime. If empty then all indexed fields are searched.",
+            "example": [
+              "title"
+            ]
+          },
+          "fields": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          },
+          "distance_fields": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/DistanceField"
+            }
+          },
+          "query_facets": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/QueryFacet"
+            }
+          },
+          "facet_filter": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/FacetFilter"
+            }
+          },
+          "result_sort": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/ResultSort"
+            },
+            "description": "Sort field and order:\nSearch results are sorted by the specified facet field, either in ascending or descending order.\nIf no sort field is specified, then the search results are sorted by rank in descending order per default.\nMultiple sort fields are combined by a \"sort by, then sort by\"-method (\"tie-breaking\"-algorithm).\nThe results are sorted by the first field, and only for those results where the first field value is identical (tie) the results are sub-sorted by the second field,\nuntil the n-th field value is either not equal or the last field is reached.\nA special _score field (BM25x), reflecting how relevant the result is for a given search query (phrase match, match in title etc.) can be combined with any of the other sort fields as primary, secondary or n-th search criterium.\nSort is only enabled on facet fields that are defined in schema at create_index!\nExamples:\n- result_sort = vec![ResultSort {field: \"price\".into(), order: SortOrder::Descending, base: FacetValue::None},ResultSort {field: \"language\".into(), order: SortOrder::Ascending, base: FacetValue::None}];\n- result_sort = vec![ResultSort {field: \"location\".into(),order: SortOrder::Ascending, base: FacetValue::Point(vec![38.8951, -77.0364])}];",
+            "example": [
+              {
+                "field": "date",
+                "order": "Ascending",
+                "base": "None"
+              }
+            ]
+          },
+          "query_type_default": {
+            "$ref": "#/components/schemas/QueryType"
+          },
+          "query_rewriting": {
+            "$ref": "#/components/schemas/QueryRewriting"
+          },
+          "search_mode": {
+            "$ref": "#/components/schemas/SearchMode"
+          }
+        }
+      },
+      "SearchResultObject": {
+        "type": "object",
+        "required": [
+          "time",
+          "original_query",
+          "query",
+          "offset",
+          "length",
+          "count",
+          "count_total",
+          "query_terms",
+          "results",
+          "facets",
+          "suggestions"
+        ],
+        "properties": {
+          "time": {
+            "type": "integer",
+            "description": "Time taken to execute the search query in nanoseconds",
+            "minimum": 0
+          },
+          "original_query": {
+            "type": "string",
+            "description": "Search query string"
+          },
+          "query": {
+            "type": "string",
+            "description": "Search query string after any automatic query correction or completion"
+          },
+          "offset": {
+            "type": "integer",
+            "description": "Offset of the returned search results",
+            "minimum": 0
+          },
+          "length": {
+            "type": "integer",
+            "description": "Number of requested search results",
+            "minimum": 0
+          },
+          "count": {
+            "type": "integer",
+            "description": "Number of returned search results matching the query",
+            "minimum": 0
+          },
+          "count_total": {
+            "type": "integer",
+            "description": "Total number of search results matching the query",
+            "minimum": 0
+          },
+          "query_terms": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            },
+            "description": "Vector of search query terms. Can be used e.g. for custom highlighting."
+          },
+          "results": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "additionalProperties": {},
+              "propertyNames": {
+                "type": "string"
+              }
+            },
+            "description": "Vector of search result documents"
+          },
+          "facets": {
+            "type": "object",
+            "description": "Facets with their values and corresponding document counts",
+            "additionalProperties": {
+              "type": "array",
+              "items": {
+                "type": "array",
+                "items": false,
+                "prefixItems": [
+                  {
+                    "type": "string"
+                  },
+                  {
+                    "type": "integer",
+                    "minimum": 0
+                  }
+                ]
+              }
+            },
+            "propertyNames": {
+              "type": "string"
+            }
+          },
+          "suggestions": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            },
+            "description": "Suggestions for query correction or completion"
+          }
+        }
+      },
+      "SortOrder": {
+        "type": "string",
+        "description": "Specifies the sort order for the search results.",
+        "enum": [
+          "Ascending",
+          "Descending"
+        ]
+      },
+      "SpellingCorrection": {
+        "type": "object",
+        "description": "Defines spelling correction (fuzzy search) settings for an index.",
+        "required": [
+          "max_dictionary_edit_distance",
+          "count_threshold",
+          "max_dictionary_entries"
+        ],
+        "properties": {
+          "max_dictionary_edit_distance": {
+            "type": "integer",
+            "description": "The edit distance thresholds for suggestions: 1..2 recommended; higher values increase latency and memory consumption.",
+            "minimum": 0
+          },
+          "term_length_threshold": {
+            "type": [
+              "array",
+              "null"
+            ],
+            "items": {
+              "type": "integer",
+              "minimum": 0
+            },
+            "description": "Term length thresholds for each edit distance.\n  None:    max_dictionary_edit_distance for all terms lengths\n  Some(\\[4\\]):    max_dictionary_edit_distance for all terms lengths >= 4,\n  Some(\\[2,8\\]):    max_dictionary_edit_distance for all terms lengths >=2, max_dictionary_edit_distance +1 for all terms for lengths>=8"
+          },
+          "count_threshold": {
+            "type": "integer",
+            "description": "The minimum frequency count for dictionary words to be considered eligible for spelling correction.\nDepends on the corpus size, 1..20 recommended.\nIf count_threshold is too high, some correct words might be missed from the dictionary and deemed misspelled,\nif count_threshold is too low, some misspelled words from the corpus might be considered correct and added to the dictionary.\nDictionary terms eligible for spelling correction (frequency count >= count_threshold) consume much more RAM, than the candidates (frequency count < count_threshold),\nbut the terms below count_threshold will be included in dictionary.csv too.",
+            "minimum": 0
+          },
+          "max_dictionary_entries": {
+            "type": "integer",
+            "description": "Limits the maximum number of dictionary entries (terms >= count_threshold) to generate during indexing, preventing excessive RAM consumption.\nThe number of terms in dictionary.csv will be higher, because it contains also the terms < count_threshold, to become eligible in the future during incremental dictionary updates.\nDictionary terms eligible for spelling correction (frequency count >= count_threshold) consume much more RAM, than the candidates (frequency count < count_threshold).\n⚠️ Above this threshold no new terms are added to the dictionary, causing them to be deemed incorrect during spelling correction and possibly changed to similar terms that are in the dictionary.",
+            "minimum": 0
+          }
+        }
+      },
+      "StemmerType": {
+        "type": "string",
+        "description": "Defines stemming behavior, reducing inflected words to their word stem, base or root form.\nStemming increases recall, but decreases precision. It can introduce false positive results.",
+        "enum": [
+          "None",
+          "Arabic",
+          "Armenian",
+          "Basque",
+          "Catalan",
+          "Czech",
+          "Danish",
+          "Dutch",
+          "DutchPorter",
+          "English",
+          "Esperanto",
+          "Estonian",
+          "Finnish",
+          "French",
+          "German",
+          "Greek",
+          "Hindi",
+          "Hungarian",
+          "Indonesian",
+          "Irish",
+          "Italian",
+          "Lithuanian",
+          "Lovins",
+          "Nepali",
+          "Norwegian",
+          "Persian",
+          "Polish",
+          "Porter",
+          "Portuguese",
+          "Romanian",
+          "Russian",
+          "Serbian",
+          "Sesotho",
+          "Spanish",
+          "Swedish",
+          "Tamil",
+          "Turkish",
+          "Ukrainian",
+          "Yiddish"
+        ]
+      },
+      "StopwordType": {
+        "oneOf": [
+          {
+            "type": "string",
+            "description": "No stopwords",
+            "enum": [
+              "None"
+            ]
+          },
+          {
+            "type": "string",
+            "description": "English stopwords",
+            "enum": [
+              "English"
+            ]
+          },
+          {
+            "type": "string",
+            "description": "German stopwords",
+            "enum": [
+              "German"
+            ]
+          },
+          {
+            "type": "string",
+            "description": "French stopwords",
+            "enum": [
+              "French"
+            ]
+          },
+          {
+            "type": "string",
+            "description": "Spanish stopwords",
+            "enum": [
+              "Spanish"
+            ]
+          },
+          {
+            "type": "object",
+            "description": "Custom stopwords",
+            "required": [
+              "Custom"
+            ],
+            "properties": {
+              "Custom": {
+                "type": "object",
+                "description": "Custom stopwords",
+                "required": [
+                  "terms"
+                ],
+                "properties": {
+                  "terms": {
+                    "type": "array",
+                    "items": {
+                      "type": "string"
+                    },
+                    "description": "List of stopwords."
+                  }
+                }
+              }
+            }
+          }
+        ],
+        "description": "StopwordType defines the stopword behavior: None, English, German, French, Spanish, Custom.\nStopwords are removed, both from index and query: for compact index size and faster queries.\nStopword removal has drawbacks: “The Who”, “Take That”, “Let it be”, “To be or not to be”, \"The The\", \"End of days\", \"What might have been\" are all valid queries for bands, songs, movies, literature,\nbut become impossible when stopwords are removed.\nThe lists of stop_words and frequent_words should not overlap."
+      },
+      "Synonym": {
+        "type": "object",
+        "description": "Defines synonyms for terms per index.",
+        "required": [
+          "terms"
+        ],
+        "properties": {
+          "terms": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            },
+            "description": "List of terms that are synonyms."
+          },
+          "multiway": {
+            "type": "boolean",
+            "description": "Creates alternative versions of documents where in each copy a term is replaced with one of its synonyms.\nDoesn't impact the query latency, but does increase the index size.\nMulti-way synonyms (default): all terms are synonyms of each other.\nOne-way synonyms: only the first term is a synonym of the following terms, but not vice versa.\nE.g. [street, avenue, road] will result in searches for street to return documents containing any of the terms street, avenue or road,\nbut searches for avenue will only return documents containing avenue, but not documents containing street or road.\nCurrently only single terms without spaces are supported.\nSynonyms are supported in result highlighting.\nThe synonyms that were created with the synonyms parameter in create_index are stored in synonyms.json in the index directory contains\nCan be manually modified, but becomes effective only after restart and only for newly indexed documents."
+          }
+        }
+      },
+      "TokenizerType": {
+        "type": "string",
+        "description": "Defines tokenizer behavior:\nAsciiAlphabetic\n- Mainly for for benchmark compatibility\n- Only ASCII alphabetic chars are recognized as token.\n\nUnicodeAlphanumeric\n- All Unicode alphanumeric chars are recognized as token.\n- Allows '+' '-' '#' in middle or end of a token: c++, c#, block-max.\n\nUnicodeAlphanumericFolded\n- All Unicode alphanumeric chars are recognized as token.\n- Allows '+' '-' '#' in middle or end of a token: c++, c#, block-max.\n- Diacritics, accents, zalgo text, umlaut, bold, italic, full-width UTF-8 characters are converted into its basic representation.\n- Apostroph handling prevents that short term parts preceding or following the apostroph get indexed (e.g. \"s\" in \"someone's\").\n- Tokenizing might be slower due to folding and apostroph processing.\n\nUnicodeAlphanumericZH\n- Implements Chinese word segmentation to segment continuous Chinese text into tokens for indexing and search.\n- Supports mixed Latin and Chinese texts\n- Supports Chinese sentence boundary chars for KWIC snippets ahd highlighting.\n- Requires feature #[cfg(feature = \"zh\")]",
+        "enum": [
+          "AsciiAlphabetic",
+          "UnicodeAlphanumeric",
+          "UnicodeAlphanumericFolded",
+          "Whitespace",
+          "WhitespaceLowercase",
+          "UnicodeAlphanumericZH"
+        ]
+      },
+      "Vec": {
+        "type": "array",
+        "items": {
+          "type": "number",
+          "format": "double"
+        }
+      },
+      "VectorSimilarity": {
+        "type": "string",
+        "description": "Similarity measure for comparing vector embeddings.",
+        "enum": [
+          "Cosine",
+          "Dot",
+          "Euclidean"
+        ]
+      }
+    }
+  },
+  "tags": [
+    {
+      "name": "Info",
+      "description": "Return info about the server"
+    },
+    {
+      "name": "API Key",
+      "description": "Create and delete API keys"
+    },
+    {
+      "name": "Index",
+      "description": "Create and delete indices"
+    },
+    {
+      "name": "Iterator",
+      "description": "Iterate through document IDs and documents"
+    },
+    {
+      "name": "Document",
+      "description": "Index, update, get and delete documents"
+    },
+    {
+      "name": "PDF File",
+      "description": "Index, and get PDF file"
+    },
+    {
+      "name": "Query",
+      "description": "Query an index"
+    }
+  ]
+}

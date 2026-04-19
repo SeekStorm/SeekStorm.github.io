@@ -1,15 +1,27 @@
-<!DOCTYPE html>
+<!doctype html>
 <html>
-<head>
-  <meta charset="UTF-8" />
-  <title>SeekStorm API Docs</title>
-</head>
-<body>
-  <script src="https://cdn.jsdelivr.net/npm/@scalar/api-reference"></script>
+  <head>
+    <title>Scalar API Reference</title>
+    <meta charset="utf-8" />
+    <meta
+      name="viewport"
+      content="width=device-width, initial-scale=1" />
+  </head>
 
-  <scalar-api-reference
-    url="https://cdn.jsdelivr.net/gh/SeekStorm/SeekStorm@main/src/seekstorm_server/openapi/openapi.json"
-    theme="purple"
-  ></scalar-api-reference>
-</body>
+  <body>
+    <div id="app"></div>
+
+    <!-- Load the Script -->
+    <script src="https://cdn.jsdelivr.net/npm/@scalar/api-reference"></script>
+
+    <!-- Initialize the Scalar API Reference -->
+    <script>
+      Scalar.createApiReference('#app', {
+        // The URL of the OpenAPI/Swagger document
+        url: 'https://cdn.jsdelivr.net/gh/SeekStorm/SeekStorm@main/src/seekstorm_server/openapi/openapi.json',
+        // Avoid CORS issues
+        proxyUrl: 'https://proxy.scalar.com',
+      })
+    </script>
+  </body>
 </html>

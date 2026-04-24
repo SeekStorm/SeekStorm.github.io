@@ -11,7 +11,7 @@
       "name": "Apache-2.0",
       "identifier": "Apache-2.0"
     },
-    "version": "3.0.0"
+    "version": "3.0.2"
   },
   "servers": [
     {
@@ -92,7 +92,7 @@
           "API Key"
         ],
         "summary": "Create API Key",
-        "description": "Creates an API key and returns the Base64 encoded API key.\nExpects the Base64 encoded master API key in the header.\nUse the master API key displayed in the server console at startup.\n\nWARNING: make sure to set the MASTER_KEY_SECRET environment variable to a secret, otherwise your generated API keys will be compromised.\nFor development purposes you may also use the SeekStorm server console command 'create' to create an demo API key 'AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA='.",
+        "description": "Creates an API key and returns the Base64 encoded API key.\nExpects the Base64 encoded master API key in the header.\nUse the master API key displayed in the server console at startup.\n\nWARNING: make sure to set the MASTER_KEY_SECRET environment variable to a secret, otherwise your generated API keys will be compromised.\n\nFor development purposes you may also use the SeekStorm server console command 'create' to create an demo API key 'AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA='.",
         "operationId": "create_apikey_api",
         "parameters": [
           {
@@ -174,7 +174,7 @@
           "API Key"
         ],
         "summary": "Delete API Key",
-        "description": "Deletes an API and returns the number of remaining API keys.\nExpects the Base64 encoded master API key in the header.\nWARNING: This will delete all indices and documents associated with the API key.",
+        "description": "Deletes an API and returns the number of remaining API keys.\nExpects the Base64 encoded master API key in the header.\n\nWARNING: This will delete all indices and documents associated with the API key.",
         "operationId": "delete_apikey_api",
         "parameters": [
           {
@@ -231,24 +231,50 @@
           "content": {
             "application/json": {
               "schema": {
-                "type": "object",
-                "description": "Create index request object",
-                "required": [
-                  "index_name",
-                  "schema",
-                  "synonyms"
-                ],
-                "properties": {
-                  "index_name": {
-                    "type": "string",
-                    "example": "demo_index"
-                  },
-                  "schema": {
-                    "type": "array",
-                    "items": {
-                      "$ref": "#/components/schemas/SchemaField"
-                    },
-                    "example": [
+                "$ref": "#/components/schemas/CreateIndexRequest"
+              },
+              "examples": {
+                "Hybrid": {
+                  "value": {
+                    "schema": [
+                      {
+                        "field": "title",
+                        "field_type": "Text",
+                        "store": true,
+                        "index_lexical": true,
+                        "index_vector": true
+                      },
+                      {
+                        "field": "body",
+                        "field_type": "Text",
+                        "store": true,
+                        "index_lexical": true,
+                        "index_vector": true
+                      },
+                      {
+                        "field": "url",
+                        "field_type": "String32",
+                        "store": true,
+                        "index_lexical": false,
+                        "index_vector": false
+                      }
+                    ],
+                    "index_name": "wikipedia",
+                    "similarity": "Bm25fProximity",
+                    "tokenizer": "UnicodeAlphanumeric",
+                    "clustering": "Auto",
+                    "inference": {
+                      "Model2Vec": {
+                        "model": "PotionBase2M",
+                        "chunk_size": 1000,
+                        "quantization": "I8"
+                      }
+                    }
+                  }
+                },
+                "Lexical": {
+                  "value": {
+                    "schema": [
                       {
                         "field": "title",
                         "field_type": "Text",
@@ -265,93 +291,44 @@
                       },
                       {
                         "field": "url",
-                        "field_type": "Text",
+                        "field_type": "String32",
                         "store": true,
                         "index_lexical": false
+                      }
+                    ],
+                    "index_name": "wikipedia",
+                    "similarity": "Bm25fProximity",
+                    "tokenizer": "UnicodeAlphanumeric"
+                  }
+                },
+                "Vector": {
+                  "value": {
+                    "schema": [
+                      {
+                        "field": "vector",
+                        "field_type": "Json",
+                        "store": false,
+                        "index_lexical": false,
+                        "index_vector": true
                       },
                       {
-                        "field": "date",
-                        "field_type": "Timestamp",
+                        "field": "index",
+                        "field_type": "Text",
                         "store": true,
                         "index_lexical": false,
-                        "facet": true
+                        "index_vector": false
                       }
-                    ]
-                  },
-                  "similarity": {
-                    "$ref": "#/components/schemas/LexicalSimilarity"
-                  },
-                  "tokenizer": {
-                    "$ref": "#/components/schemas/TokenizerType"
-                  },
-                  "stemmer": {
-                    "$ref": "#/components/schemas/StemmerType"
-                  },
-                  "stop_words": {
-                    "$ref": "#/components/schemas/StopwordType"
-                  },
-                  "frequent_words": {
-                    "$ref": "#/components/schemas/FrequentwordType"
-                  },
-                  "ngram_indexing": {
-                    "type": "integer",
-                    "format": "int32",
-                    "minimum": 0
-                  },
-                  "document_compression": {
-                    "$ref": "#/components/schemas/DocumentCompression"
-                  },
-                  "synonyms": {
-                    "type": "array",
-                    "items": {
-                      "$ref": "#/components/schemas/Synonym"
-                    },
-                    "example": [
-                      {
-                        "terms": [
-                          "berry",
-                          "lingonberry",
-                          "blueberry",
-                          "gooseberry"
-                        ],
-                        "multiway": false
-                      }
-                    ]
-                  },
-                  "force_shard_number": {
-                    "type": [
-                      "integer",
-                      "null"
                     ],
-                    "description": "Set number of shards manually or automatically.\n- none: number of shards is set automatically = number of physical processor cores (default)\n- small: slower indexing, higher latency, slightly higher throughput, faster realtime search, lower RAM consumption\n- large: faster indexing, lower latency, slightly lower throughput, slower realtime search, higher RAM consumption",
-                    "minimum": 0
-                  },
-                  "spelling_correction": {
-                    "oneOf": [
-                      {
-                        "type": "null"
-                      },
-                      {
-                        "$ref": "#/components/schemas/SpellingCorrection",
-                        "description": "Enable spelling correction for search queries using the SymSpell algorithm.\nWhen enabled, a SymSpell dictionary is incrementally created during indexing of documents and stored in the index.\nIn addition you need to set the parameter `query_rewriting` in the search method to enable it per query.\nThe creation of an individual dictionary derived from the indexed documents improves the correction quality compared to a generic dictionary.\nAn dictionary per index improves the privacy compared to a global dictionary derived from all indices.\nThe dictionary is deleted when delete_index or clear_index is called.\nNote: enabling spelling correction increases the index size, indexing time and query latency.\nDefault: None. Enable by setting a value for max_dictionary_edit_distance (1..2 recommended).\nThe higher the value, the higher the number of errors taht can be corrected - but also the memory consumption, lookup latency, and the number of false positives."
+                    "index_name": "sift1m",
+                    "clustering": "Auto",
+                    "inference": {
+                      "External": {
+                        "dimensions": 128,
+                        "precision": "F32",
+                        "quantization": "I8",
+                        "similarity": "Euclidean"
                       }
-                    ]
-                  },
-                  "query_completion": {
-                    "oneOf": [
-                      {
-                        "type": "null"
-                      },
-                      {
-                        "$ref": "#/components/schemas/QueryCompletion"
-                      }
-                    ]
-                  },
-                  "clustering": {
-                    "$ref": "#/components/schemas/Clustering"
-                  },
-                  "inference": {
-                    "$ref": "#/components/schemas/Inference"
+                    }
                   }
                 }
               }
@@ -496,7 +473,7 @@
           "Index"
         ],
         "summary": "Commit Index",
-        "description": "Commit moves indexed documents from the intermediate uncompressed data structure (array lists/HashMap, queryable by realtime search) in RAM\nto the final compressed data structure (roaring bitmap) on Mmap or disk -\nwhich is persistent, more compact, with lower query latency and allows search with realtime=false.\nCommit is invoked automatically each time 64K documents are newly indexed as well as on close_index (e.g. server quit).\nThere is no way to prevent this automatic commit by not manually invoking it.\nBut commit can also be invoked manually at any time at any number of newly indexed documents.\ncommit is a **hard commit** for persistence on disk. A **soft commit** for searchability\nis invoked implicitly with every index_doc,\ni.e. the document can immediately searched and included in the search results\nif it matches the query AND the query paramter realtime=true is enabled.\n**Use commit with caution, as it is an expensive operation**.\n**Usually, there is no need to invoke it manually**, as it is invoked automatically every 64k documents and when the index is closed with close_index.\nBefore terminating the program, always call close_index (commit), otherwise all documents indexed since last (manual or automatic) commit are lost.\nThere are only 2 reasons that justify a manual commit:\n1. if you want to search newly indexed documents without using realtime=true for search performance reasons or\n2. if after indexing new documents there won't be more documents indexed (for some time),\n   so there won't be (soon) a commit invoked automatically at the next 64k threshold or close_index,\n   but you still need immediate persistence guarantees on disk to protect against data loss in the event of a crash.",
+        "description": "Commit moves indexed documents from the intermediate uncompressed data structure (array lists/HashMap, queryable by realtime search) in RAM\nto the final compressed data structure (roaring bitmap) on Mmap or disk -\nwhich is persistent, more compact, with lower query latency and allows search with realtime=false.\nCommit is invoked automatically each time 64K documents are newly indexed as well as on close_index (e.g. server quit).\nThere is no way to prevent this automatic commit by not manually invoking it.\nBut commit can also be invoked manually at any time at any number of newly indexed documents.\ncommit is a **hard commit** for persistence on disk. A **soft commit** for searchability\nis invoked implicitly with every index_doc,\ni.e. the document can immediately searched and included in the search results\nif it matches the query AND the query paramter realtime=true is enabled.\n\n**Use commit with caution, as it is an expensive operation**.\n**Usually, there is no need to invoke it manually**, as it is invoked automatically every 64k documents and when the index is closed with close_index.\nBefore terminating the program, always call close_index (commit), otherwise all documents indexed since last (manual or automatic) commit are lost.\nThere are only 2 reasons that justify a manual commit:\n1. if you want to search newly indexed documents without using realtime=true for search performance reasons or\n2. if after indexing new documents there won't be more documents indexed (for some time),\n   so there won't be (soon) a commit invoked automatically at the next 64k threshold or close_index,\n   but you still need immediate persistence guarantees on disk to protect against data loss in the event of a crash.",
         "operationId": "commit_index_api",
         "parameters": [
           {
@@ -552,7 +529,7 @@
           "Iterator"
         ],
         "summary": "Document iterator",
-        "description": "Document iterator via GET and POST are identical, only the way parameters are passed differ.\nThe document iterator allows to iterate over all document IDs and documents in the entire index, forward or backward.\nIt enables efficient sequential access to every document, even in very large indexes, without running a search.\nPaging through the index works without collecting document IDs to Min-heap in size-limited RAM first.\nThe iterator guarantees that only valid document IDs are returned, even though document IDs are not strictly continuous.\nDocument IDs can also be fetched in batches, reducing round trips and significantly improving performance, especially when using the REST API.\nTypical use cases include index export, conversion, analytics, audits, and inspection.\nExplanation of \"eventually continuous\" docid:\nIn SeekStorm, document IDs become continuous over time. In a multi-sharded index, each shard maintains its own document ID space.\nBecause documents are distributed across shards in a non-deterministic, load-dependent way, shard-local document IDs advance at different rates.\nWhen these are mapped to global document IDs, temporary gaps can appear.\nAs a result, simply iterating from 0 to the total document count may encounter invalid IDs near the end.\nThe Document Iterator abstracts this complexity and reliably returns only valid document IDs.\n# Parameters\n- docid=None, take>0: **skip first s document IDs**, then **take next t document IDs** of an index.\n- docid=None, take<0: **skip last s document IDs**, then **take previous t document IDs** of an index.\n- docid=Some, take>0: **skip next s document IDs**, then **take next t document IDs** of an index, relative to a given document ID, with end-of-index indicator.\n- docid=Some, take<0: **skip previous s document IDs**, then **take previous t document IDs**, relative to a given document ID, with start-of-index indicator.\n- take=0: does not make sense, that defies the purpose of get_iterator.\n- The sign of take indicates the direction of iteration: positive take for forward iteration, negative take for backward iteration.\n- The skip parameter is always positive, indicating the number of document IDs to skip before taking document IDs. The skip direction is determined by the sign of take too.\n- include_document: if true, the documents are also retrieved along with their document IDs.\nNext page:     take last  docid from previous result set, skip=1, take=+page_size\nPrevious page: take first docid from previous result set, skip=1, take=-page_size\nReturns an IteratorResult, consisting of the number of actually skipped document IDs, and a list of taken document IDs and documents, sorted ascending).\nDetect end/begin of index during iteration: if returned vec.len() < requested take || if returned skip <requested skip",
+        "description": "Document iterator via GET and POST are identical, only the way parameters are passed differ.\nThe document iterator allows to iterate over all document IDs and documents in the entire index, forward or backward.\nIt enables efficient sequential access to every document, even in very large indexes, without running a search.\nPaging through the index works without collecting document IDs to Min-heap in size-limited RAM first.\nThe iterator guarantees that only valid document IDs are returned, even though document IDs are not strictly continuous.\nDocument IDs can also be fetched in batches, reducing round trips and significantly improving performance, especially when using the REST API.\nTypical use cases include index export, conversion, analytics, audits, and inspection.\n\nExplanation of \"eventually continuous\" docid:\nIn SeekStorm, document IDs become continuous over time. In a multi-sharded index, each shard maintains its own document ID space.\nBecause documents are distributed across shards in a non-deterministic, load-dependent way, shard-local document IDs advance at different rates.\nWhen these are mapped to global document IDs, temporary gaps can appear.\nAs a result, simply iterating from 0 to the total document count may encounter invalid IDs near the end.\nThe Document Iterator abstracts this complexity and reliably returns only valid document IDs.\n\n# Parameters\n- docid=None, take>0: **skip first s document IDs**, then **take next t document IDs** of an index.\n- docid=None, take<0: **skip last s document IDs**, then **take previous t document IDs** of an index.\n- docid=Some, take>0: **skip next s document IDs**, then **take next t document IDs** of an index, relative to a given document ID, with end-of-index indicator.\n- docid=Some, take<0: **skip previous s document IDs**, then **take previous t document IDs**, relative to a given document ID, with start-of-index indicator.\n- take=0: does not make sense, that defies the purpose of get_iterator.\n- The sign of take indicates the direction of iteration: positive take for forward iteration, negative take for backward iteration.\n- The skip parameter is always positive, indicating the number of document IDs to skip before taking document IDs. The skip direction is determined by the sign of take too.\n- include_document: if true, the documents are also retrieved along with their document IDs.\n\nNext page:     take last  docid from previous result set, skip=1, take=+page_size\nPrevious page: take first docid from previous result set, skip=1, take=-page_size\n\nReturns an IteratorResult, consisting of the number of actually skipped document IDs, and a list of taken document IDs and documents, sorted ascending).\nDetect end/begin of index during iteration: if returned vec.len() < requested take || if returned skip <requested skip",
         "operationId": "get_iterator_api_get",
         "parameters": [
           {
@@ -676,7 +653,7 @@
           "Iterator"
         ],
         "summary": "Document iterator",
-        "description": "Document iterator via GET and POST are identical, only the way parameters are passed differ.\nThe document iterator allows to iterate over all document IDs and documents in the entire index, forward or backward.\nIt enables efficient sequential access to every document, even in very large indexes, without running a search.\nPaging through the index works without collecting document IDs to Min-heap in size-limited RAM first.\nThe iterator guarantees that only valid document IDs are returned, even though document IDs are not strictly continuous.\nDocument IDs can also be fetched in batches, reducing round trips and significantly improving performance, especially when using the REST API.\nTypical use cases include index export, conversion, analytics, audits, and inspection.\nExplanation of \"eventually continuous\" docid:\nIn SeekStorm, document IDs become continuous over time. In a multi-sharded index, each shard maintains its own document ID space.\nBecause documents are distributed across shards in a non-deterministic, load-dependent way, shard-local document IDs advance at different rates.\nWhen these are mapped to global document IDs, temporary gaps can appear.\nAs a result, simply iterating from 0 to the total document count may encounter invalid IDs near the end.\nThe Document Iterator abstracts this complexity and reliably returns only valid document IDs.\n# Parameters\n- docid=None, take>0: **skip first s document IDs**, then **take next t document IDs** of an index.\n- docid=None, take<0: **skip last s document IDs**, then **take previous t document IDs** of an index.\n- docid=Some, take>0: **skip next s document IDs**, then **take next t document IDs** of an index, relative to a given document ID, with end-of-index indicator.\n- docid=Some, take<0: **skip previous s document IDs**, then **take previous t document IDs**, relative to a given document ID, with start-of-index indicator.\n- take=0: does not make sense, that defies the purpose of get_iterator.\n- The sign of take indicates the direction of iteration: positive take for forward iteration, negative take for backward iteration.\n- The skip parameter is always positive, indicating the number of document IDs to skip before taking document IDs. The skip direction is determined by the sign of take too.\n- include_document: if true, the documents are also retrieved along with their document IDs.\nNext page:     take last  docid from previous result set, skip=1, take=+page_size\nPrevious page: take first docid from previous result set, skip=1, take=-page_size\nReturns an IteratorResult, consisting of the number of actually skipped document IDs, and a list of taken document IDs and documents, sorted ascending).\nDetect end/begin of index during iteration: if returned vec.len() < requested take || if returned skip <requested skip",
+        "description": "Document iterator via GET and POST are identical, only the way parameters are passed differ.\nThe document iterator allows to iterate over all document IDs and documents in the entire index, forward or backward.\nIt enables efficient sequential access to every document, even in very large indexes, without running a search.\nPaging through the index works without collecting document IDs to Min-heap in size-limited RAM first.\nThe iterator guarantees that only valid document IDs are returned, even though document IDs are not strictly continuous.\nDocument IDs can also be fetched in batches, reducing round trips and significantly improving performance, especially when using the REST API.\nTypical use cases include index export, conversion, analytics, audits, and inspection.\n\nExplanation of \"eventually continuous\" docid:\nIn SeekStorm, document IDs become continuous over time. In a multi-sharded index, each shard maintains its own document ID space.\nBecause documents are distributed across shards in a non-deterministic, load-dependent way, shard-local document IDs advance at different rates.\nWhen these are mapped to global document IDs, temporary gaps can appear.\nAs a result, simply iterating from 0 to the total document count may encounter invalid IDs near the end.\nThe Document Iterator abstracts this complexity and reliably returns only valid document IDs.\n\n# Parameters\n- docid=None, take>0: **skip first s document IDs**, then **take next t document IDs** of an index.\n- docid=None, take<0: **skip last s document IDs**, then **take previous t document IDs** of an index.\n- docid=Some, take>0: **skip next s document IDs**, then **take next t document IDs** of an index, relative to a given document ID, with end-of-index indicator.\n- docid=Some, take<0: **skip previous s document IDs**, then **take previous t document IDs**, relative to a given document ID, with start-of-index indicator.\n- take=0: does not make sense, that defies the purpose of get_iterator.\n- The sign of take indicates the direction of iteration: positive take for forward iteration, negative take for backward iteration.\n- The skip parameter is always positive, indicating the number of document IDs to skip before taking document IDs. The skip direction is determined by the sign of take too.\n- include_document: if true, the documents are also retrieved along with their document IDs.\n\nNext page:     take last  docid from previous result set, skip=1, take=+page_size\nPrevious page: take first docid from previous result set, skip=1, take=-page_size\n\nReturns an IteratorResult, consisting of the number of actually skipped document IDs, and a list of taken document IDs and documents, sorted ascending).\nDetect end/begin of index during iteration: if returned vec.len() < requested take || if returned skip <requested skip",
         "operationId": "get_iterator_api_post",
         "parameters": [
           {
@@ -745,7 +722,7 @@
           "Document"
         ],
         "summary": "Index Document(s)",
-        "description": "Index a JSON document or an array of JSON documents (bulk), each consisting of arbitrary key-value pairs to the index with the specified apikey and index_id, and return the number of indexed docs.\nIndex documents enables true real-time search (as opposed to near realtime.search):\nWhen in query_index the parameter `realtime` is set to `true` then indexed, but uncommitted documents are immediately included in the search results, without requiring a commit or refresh.\nTherefore a explicit commit_index is almost never required, as it is invoked automatically after 64k documents are indexed or on close_index for persistence.",
+        "description": "Index a JSON document or an array of JSON documents (bulk), each consisting of arbitrary key-value pairs to the index with the specified apikey and index_id, and return the number of indexed docs.\n\nIndex documents enables true real-time search (as opposed to near realtime.search):\nWhen in query_index the parameter `realtime` is set to `true` then indexed, but uncommitted documents are immediately included in the search results, without requiring a commit or refresh.\nTherefore a explicit commit_index is almost never required, as it is invoked automatically after 64k documents are indexed or on close_index for persistence.",
         "operationId": "index_document_api",
         "parameters": [
           {
@@ -818,7 +795,7 @@
           "Document"
         ],
         "summary": "Delete Document(s) by Request Object",
-        "description": "Delete document by document_id, by array of document_id (bulk), by query (SearchRequestObject) from index with index_id, or clear all documents from index.\nImmediately effective, indpendent of commit.\nIndex space used by deleted documents is not reclaimed (until compaction is implemented), but result_count_total is updated.\nBy manually deleting the delete.bin file the deleted documents can be recovered (until compaction).\nDeleted documents impact performance, especially but not limited to counting (Count, TopKCount). They also increase the size of the index (until compaction is implemented).\nFor minimal query latency delete index and reindexing documents is preferred over deleting documents (until compaction is implemented).\nBM25 scores are not updated (until compaction is implemented), but the impact is minimal.\nDocument ID can by obtained by search. When deleting by query (SearchRequestObject), it is advised to perform a dry run search first, to see which documents will be deleted.",
+        "description": "Delete document by document_id, by array of document_id (bulk), by query (SearchRequestObject) from index with index_id, or clear all documents from index.\n\nImmediately effective, indpendent of commit.\nIndex space used by deleted documents is not reclaimed (until compaction is implemented), but result_count_total is updated.\nBy manually deleting the delete.bin file the deleted documents can be recovered (until compaction).\n\nDeleted documents impact performance, especially but not limited to counting (Count, TopKCount). They also increase the size of the index (until compaction is implemented).\nFor minimal query latency delete index and reindexing documents is preferred over deleting documents (until compaction is implemented).\nBM25 scores are not updated (until compaction is implemented), but the impact is minimal.\n\nDocument ID can by obtained by search. When deleting by query (SearchRequestObject), it is advised to perform a dry run search first, to see which documents will be deleted.",
         "operationId": "delete_document_by_object_api",
         "parameters": [
           {
@@ -892,7 +869,7 @@
           "Document"
         ],
         "summary": "Update Document(s)",
-        "description": "Update a JSON document or an array of JSON documents (bulk), each consisting of arbitrary key-value pairs to the index with the specified apikey and index_id, and return the number of indexed docs.\nUpdate document is a combination of delete_document and index_document.\nAll current limitations of delete_document apply.\nUpdate documents enables true real-time search (as opposed to near realtime.search):\nWhen in query_index the parameter `realtime` is set to `true` then indexed, but uncommitted documents are immediately included in the search results, without requiring a commit or refresh.\nTherefore a explicit commit_index is almost never required, as it is invoked automatically after 64k documents are indexed or on close_index for persistence.",
+        "description": "Update a JSON document or an array of JSON documents (bulk), each consisting of arbitrary key-value pairs to the index with the specified apikey and index_id, and return the number of indexed docs.\n\nUpdate document is a combination of delete_document and index_document.\nAll current limitations of delete_document apply.\n\nUpdate documents enables true real-time search (as opposed to near realtime.search):\nWhen in query_index the parameter `realtime` is set to `true` then indexed, but uncommitted documents are immediately included in the search results, without requiring a commit or refresh.\nTherefore a explicit commit_index is almost never required, as it is invoked automatically after 64k documents are indexed or on close_index for persistence.",
         "operationId": "update_document_api",
         "parameters": [
           {
@@ -1176,7 +1153,7 @@
           "Document"
         ],
         "summary": "Delete Document",
-        "description": "Delete document by document_id from index with index_id\n⚠️ Use search or get_iterator first to obtain a valid doc_id. Document IDs are not guaranteed to be continuous and gapless!\nImmediately effective, indpendent of commit.\nIndex space used by deleted documents is not reclaimed (until compaction is implemented), but result_count_total is updated.\nBy manually deleting the delete.bin file the deleted documents can be recovered (until compaction).\nDeleted documents impact performance, especially but not limited to counting (Count, TopKCount). They also increase the size of the index (until compaction is implemented).\nFor minimal query latency delete index and reindexing documents is preferred over deleting documents (until compaction is implemented).\nBM25 scores are not updated (until compaction is implemented), but the impact is minimal.",
+        "description": "Delete document by document_id from index with index_id\n\n⚠️ Use search or get_iterator first to obtain a valid doc_id. Document IDs are not guaranteed to be continuous and gapless!\nImmediately effective, indpendent of commit.\nIndex space used by deleted documents is not reclaimed (until compaction is implemented), but result_count_total is updated.\nBy manually deleting the delete.bin file the deleted documents can be recovered (until compaction).\n\nDeleted documents impact performance, especially but not limited to counting (Count, TopKCount). They also increase the size of the index (until compaction is implemented).\nFor minimal query latency delete index and reindexing documents is preferred over deleting documents (until compaction is implemented).\nBM25 scores are not updated (until compaction is implemented), but the impact is minimal.",
         "operationId": "delete_document_by_parameter_api",
         "parameters": [
           {
@@ -1312,7 +1289,7 @@
           "Query"
         ],
         "summary": "Query Index",
-        "description": "Query results from index with index_id.\nQuery index via GET is a convenience function, that offers only a limited set of parameters compared to Query Index via POST.",
+        "description": "Query results from index with index_id.\n\nQuery index via GET is a convenience function, that offers only a limited set of parameters compared to Query Index via POST.",
         "operationId": "query_index_api_get",
         "parameters": [
           {
@@ -1419,7 +1396,7 @@
           "Query"
         ],
         "summary": "Query Index",
-        "description": "Query results from index with index_id\nThe following parameters are supported:\n- Result type\n- Result sorting\n- Realtime search\n- Field filter\n- Fields to include in search results\n- Distance fields: derived fields from distance calculations\n- Highlights: keyword-in-context snippets and term highlighting\n- Query facets: which facets fields to calculate and return at query time\n- Facet filter: filter facets by field and value\n- Result sort: sort results by field and direction\n- Query type default: default query type, if not specified in query",
+        "description": "Query results from index with index_id\n\nThe following parameters are supported:\n- Result type\n- Result sorting\n- Realtime search\n- Field filter\n- Fields to include in search results\n- Distance fields: derived fields from distance calculations\n- Highlights: keyword-in-context snippets and term highlighting\n- Query facets: which facets fields to calculate and return at query time\n- Facet filter: filter facets by field and value\n- Result sort: sort results by field and direction\n- Query type default: default query type, if not specified in query",
         "operationId": "query_index_api_post",
         "parameters": [
           {
@@ -1533,7 +1510,7 @@
                     "items": {
                       "$ref": "#/components/schemas/ResultSort"
                     },
-                    "description": "Sort field and order:\nSearch results are sorted by the specified facet field, either in ascending or descending order.\nIf no sort field is specified, then the search results are sorted by rank in descending order per default.\nMultiple sort fields are combined by a \"sort by, then sort by\"-method (\"tie-breaking\"-algorithm).\nThe results are sorted by the first field, and only for those results where the first field value is identical (tie) the results are sub-sorted by the second field,\nuntil the n-th field value is either not equal or the last field is reached.\nA special _score field (BM25x), reflecting how relevant the result is for a given search query (phrase match, match in title etc.) can be combined with any of the other sort fields as primary, secondary or n-th search criterium.\nSort is only enabled on facet fields that are defined in schema at create_index!\nExamples:\n- result_sort = vec![ResultSort {field: \"price\".into(), order: SortOrder::Descending, base: FacetValue::None},ResultSort {field: \"language\".into(), order: SortOrder::Ascending, base: FacetValue::None}];\n- result_sort = vec![ResultSort {field: \"location\".into(),order: SortOrder::Ascending, base: FacetValue::Point(vec![38.8951, -77.0364])}];",
+                    "description": "Sort field and order:\n\nSearch results are sorted by the specified facet field, either in ascending or descending order.\nIf no sort field is specified, then the search results are sorted by rank in descending order per default.\nMultiple sort fields are combined by a \"sort by, then sort by\"-method (\"tie-breaking\"-algorithm).\nThe results are sorted by the first field, and only for those results where the first field value is identical (tie) the results are sub-sorted by the second field,\nuntil the n-th field value is either not equal or the last field is reached.\nA special _score field (BM25x), reflecting how relevant the result is for a given search query (phrase match, match in title etc.) can be combined with any of the other sort fields as primary, secondary or n-th search criterium.\nSort is only enabled on facet fields that are defined in schema at create_index!\n\nExamples:\n- result_sort = vec![ResultSort {field: \"price\".into(), order: SortOrder::Descending, base: FacetValue::None},ResultSort {field: \"language\".into(), order: SortOrder::Ascending, base: FacetValue::None}];\n- result_sort = vec![ResultSort {field: \"location\".into(),order: SortOrder::Ascending, base: FacetValue::Point(vec![38.8951, -77.0364])}];",
                     "example": [
                       {
                         "field": "date",
@@ -1594,14 +1571,14 @@
           },
           {
             "type": "object",
-            "description": "Search only in the clusters with the highest similarity scores to the query vector.\nThe number of clusters to search is specified by the n-probe parameter.\nYou cannot directly set a specific, guaranteed recall number (e.g., \"always give me 95% recall@10\"). There is no one-fits-all, there is no automatism.\nInstead, you manually tune parameters that control the tradeoff between query latency and accuracy.\nBecause recall depends heavily on the structure of your specific data (distribution, dimensionality, and clustering) and queries,\nthere is always a trial-and-error (benchmarking) phase required to determine the right settings for your data.\nExamples:\nwikipedia, VectorSimilarity::Dot, dimensions: 64, Precision::F32, Clustering::Auto, Clustering::I8, recall@10=95% -> Nprobe(55)\nwikipedia, VectorSimilarity::Dot, dimensions: 64, Precision::F32, Clustering::Auto, Clustering::I8, recall@10=99% -> Nprobe(140)\nsift1m, VectorSimilarity::Euclidean, dimensions: 128, Precision::F32, Clustering::Auto, Quantization::None, recall@10=95% -> Nprobe(11)\nsift1m, VectorSimilarity::Euclidean, dimensions: 128, Precision::F32, Clustering::Auto, Quantization::None, recall@10=99% -> Nprobe(22)",
+            "description": "Search only in the clusters with the highest similarity scores to the query vector.\nThe number of clusters to search is specified by the n-probe parameter.\n\nYou cannot directly set a specific, guaranteed recall number (e.g., \"always give me 95% recall@10\"). There is no one-fits-all, there is no automatism.\nInstead, you manually tune parameters that control the tradeoff between query latency and accuracy.\nBecause recall depends heavily on the structure of your specific data (distribution, dimensionality, and clustering) and queries,\nthere is always a trial-and-error (benchmarking) phase required to determine the right settings for your data.\n\nExamples:\nwikipedia, VectorSimilarity::Dot, dimensions: 64, Precision::F32, Clustering::Auto, Clustering::I8, recall@10=95% -> Nprobe(55)\nwikipedia, VectorSimilarity::Dot, dimensions: 64, Precision::F32, Clustering::Auto, Clustering::I8, recall@10=99% -> Nprobe(140)\nsift1m, VectorSimilarity::Euclidean, dimensions: 128, Precision::F32, Clustering::Auto, Quantization::None, recall@10=95% -> Nprobe(11)\nsift1m, VectorSimilarity::Euclidean, dimensions: 128, Precision::F32, Clustering::Auto, Quantization::None, recall@10=99% -> Nprobe(22)",
             "required": [
               "Nprobe"
             ],
             "properties": {
               "Nprobe": {
                 "type": "integer",
-                "description": "Search only in the clusters with the highest similarity scores to the query vector.\nThe number of clusters to search is specified by the n-probe parameter.\nYou cannot directly set a specific, guaranteed recall number (e.g., \"always give me 95% recall@10\"). There is no one-fits-all, there is no automatism.\nInstead, you manually tune parameters that control the tradeoff between query latency and accuracy.\nBecause recall depends heavily on the structure of your specific data (distribution, dimensionality, and clustering) and queries,\nthere is always a trial-and-error (benchmarking) phase required to determine the right settings for your data.\nExamples:\nwikipedia, VectorSimilarity::Dot, dimensions: 64, Precision::F32, Clustering::Auto, Clustering::I8, recall@10=95% -> Nprobe(55)\nwikipedia, VectorSimilarity::Dot, dimensions: 64, Precision::F32, Clustering::Auto, Clustering::I8, recall@10=99% -> Nprobe(140)\nsift1m, VectorSimilarity::Euclidean, dimensions: 128, Precision::F32, Clustering::Auto, Quantization::None, recall@10=95% -> Nprobe(11)\nsift1m, VectorSimilarity::Euclidean, dimensions: 128, Precision::F32, Clustering::Auto, Quantization::None, recall@10=99% -> Nprobe(22)",
+                "description": "Search only in the clusters with the highest similarity scores to the query vector.\nThe number of clusters to search is specified by the n-probe parameter.\n\nYou cannot directly set a specific, guaranteed recall number (e.g., \"always give me 95% recall@10\"). There is no one-fits-all, there is no automatism.\nInstead, you manually tune parameters that control the tradeoff between query latency and accuracy.\nBecause recall depends heavily on the structure of your specific data (distribution, dimensionality, and clustering) and queries,\nthere is always a trial-and-error (benchmarking) phase required to determine the right settings for your data.\n\nExamples:\nwikipedia, VectorSimilarity::Dot, dimensions: 64, Precision::F32, Clustering::Auto, Clustering::I8, recall@10=95% -> Nprobe(55)\nwikipedia, VectorSimilarity::Dot, dimensions: 64, Precision::F32, Clustering::Auto, Clustering::I8, recall@10=99% -> Nprobe(140)\nsift1m, VectorSimilarity::Euclidean, dimensions: 128, Precision::F32, Clustering::Auto, Quantization::None, recall@10=95% -> Nprobe(11)\nsift1m, VectorSimilarity::Euclidean, dimensions: 128, Precision::F32, Clustering::Auto, Quantization::None, recall@10=99% -> Nprobe(22)",
                 "minimum": 0
               }
             }
@@ -1673,6 +1650,130 @@
           }
         ],
         "description": "Clustering defines the clustering behavior for approximate nearest neighbor (ANN) search: None, Auto, Fixed(usize)."
+      },
+      "CreateIndexRequest": {
+        "type": "object",
+        "description": "Create index request object",
+        "required": [
+          "index_name",
+          "schema"
+        ],
+        "properties": {
+          "index_name": {
+            "type": "string",
+            "example": "demo_index"
+          },
+          "schema": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/SchemaField"
+            },
+            "example": [
+              {
+                "field": "title",
+                "field_type": "Text",
+                "store": true,
+                "index_lexical": true,
+                "boost": 10.0
+              },
+              {
+                "field": "body",
+                "field_type": "Text",
+                "store": true,
+                "index_lexical": true,
+                "longest": true
+              },
+              {
+                "field": "url",
+                "field_type": "Text",
+                "store": true,
+                "index_lexical": false
+              },
+              {
+                "field": "date",
+                "field_type": "Timestamp",
+                "store": true,
+                "index_lexical": false,
+                "facet": true
+              }
+            ]
+          },
+          "similarity": {
+            "$ref": "#/components/schemas/LexicalSimilarity"
+          },
+          "tokenizer": {
+            "$ref": "#/components/schemas/TokenizerType"
+          },
+          "stemmer": {
+            "$ref": "#/components/schemas/StemmerType"
+          },
+          "stop_words": {
+            "$ref": "#/components/schemas/StopwordType"
+          },
+          "frequent_words": {
+            "$ref": "#/components/schemas/FrequentwordType"
+          },
+          "ngram_indexing": {
+            "type": "integer",
+            "format": "int32",
+            "minimum": 0
+          },
+          "document_compression": {
+            "$ref": "#/components/schemas/DocumentCompression"
+          },
+          "synonyms": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/Synonym"
+            },
+            "example": [
+              {
+                "terms": [
+                  "berry",
+                  "lingonberry",
+                  "blueberry",
+                  "gooseberry"
+                ],
+                "multiway": false
+              }
+            ]
+          },
+          "force_shard_number": {
+            "type": [
+              "integer",
+              "null"
+            ],
+            "description": "Set number of shards manually or automatically.\n- none: number of shards is set automatically = number of physical processor cores (default)\n- small: slower indexing, higher latency, slightly higher throughput, faster realtime search, lower RAM consumption\n- large: faster indexing, lower latency, slightly lower throughput, slower realtime search, higher RAM consumption",
+            "minimum": 0
+          },
+          "spelling_correction": {
+            "oneOf": [
+              {
+                "type": "null"
+              },
+              {
+                "$ref": "#/components/schemas/SpellingCorrection",
+                "description": "Enable spelling correction for search queries using the SymSpell algorithm.\nWhen enabled, a SymSpell dictionary is incrementally created during indexing of documents and stored in the index.\nIn addition you need to set the parameter `query_rewriting` in the search method to enable it per query.\nThe creation of an individual dictionary derived from the indexed documents improves the correction quality compared to a generic dictionary.\nAn dictionary per index improves the privacy compared to a global dictionary derived from all indices.\nThe dictionary is deleted when delete_index or clear_index is called.\nNote: enabling spelling correction increases the index size, indexing time and query latency.\nDefault: None. Enable by setting a value for max_dictionary_edit_distance (1..2 recommended).\nThe higher the value, the higher the number of errors taht can be corrected - but also the memory consumption, lookup latency, and the number of false positives."
+              }
+            ]
+          },
+          "query_completion": {
+            "oneOf": [
+              {
+                "type": "null"
+              },
+              {
+                "$ref": "#/components/schemas/QueryCompletion"
+              }
+            ]
+          },
+          "clustering": {
+            "$ref": "#/components/schemas/Clustering"
+          },
+          "inference": {
+            "$ref": "#/components/schemas/Inference"
+          }
+        }
       },
       "DistanceField": {
         "type": "object",
@@ -3724,7 +3825,7 @@
                       "type": "integer",
                       "minimum": 0
                     },
-                    "description": "Term length thresholds for each edit distance.\n  None:    max_dictionary_edit_distance for all terms lengths\n  Some(\\[4\\]):    max_dictionary_edit_distance for all terms lengths >= 4,\n  Some(\\[2,8\\]):    max_dictionary_edit_distance for all terms lengths >=2, max_dictionary_edit_distance +1 for all terms for lengths>=8"
+                    "description": "Term length thresholds for each edit distance.\n  None    max_dictionary_edit_distance for all terms lengths\n  Some(\\[4\\])    max_dictionary_edit_distance for all terms lengths >= 4,\n  Some(\\[2,8\\])    max_dictionary_edit_distance for all terms lengths >=2, max_dictionary_edit_distance +1 for all terms for lengths>=8"
                   },
                   "complete": {
                     "type": [
@@ -3782,7 +3883,7 @@
                       "type": "integer",
                       "minimum": 0
                     },
-                    "description": "Term length thresholds for each edit distance.\n  None:    max_dictionary_edit_distance for all terms lengths\n  Some(\\[4\\]):    max_dictionary_edit_distance for all terms lengths >= 4,\n  Some(\\[2,8\\])    max_dictionary_edit_distance for all terms lengths >=2, max_dictionary_edit_distance +1 for all terms for lengths>=8"
+                    "description": "Term length thresholds for each edit distance.\n  None    max_dictionary_edit_distance for all terms lengths\n  Some(\\[4\\])    max_dictionary_edit_distance for all terms lengths >= 4,\n  Some(\\[2,8\\])    max_dictionary_edit_distance for all terms lengths >=2, max_dictionary_edit_distance +1 for all terms for lengths>=8"
                   },
                   "complete": {
                     "type": [
@@ -3840,7 +3941,7 @@
                       "type": "integer",
                       "minimum": 0
                     },
-                    "description": "Term length thresholds for each edit distance.\n  None:    max_dictionary_edit_distance for all terms lengths\n  Some(\\[4\\]):    max_dictionary_edit_distance for all terms lengths >= 4,\n  Some(\\[2,8\\]):    max_dictionary_edit_distance for all terms lengths >=2, max_dictionary_edit_distance +1 for all terms for lengths>=8"
+                    "description": "Term length thresholds for each edit distance.\n  None    max_dictionary_edit_distance for all terms lengths\n  Some(\\[4\\])    max_dictionary_edit_distance for all terms lengths >= 4,\n  Some(\\[2,8\\])    max_dictionary_edit_distance for all terms lengths >=2, max_dictionary_edit_distance +1 for all terms for lengths>=8"
                   },
                   "complete": {
                     "type": [
@@ -3867,7 +3968,7 @@
       },
       "QueryType": {
         "type": "string",
-        "description": "Specifies the default QueryType: The following query types are supported:\n- **Union** (OR, disjunction),\n- **Intersection** (AND, conjunction),\n- **Phrase** (\"\"),\n- **Not** (-).\n\nThe default QueryType is superseded if the query parser detects that a different query type is specified within the query string (+ - \"\").\n",
+        "description": "Specifies the default QueryType: The following query types are supported:\n- **Union** (OR, disjunction),\n- **Intersection** (AND, conjunction),\n- **Phrase** (\"\"),\n- **Not** (-).\n\nThe default QueryType is superseded if the query parser detects that a different query type is specified within the query string (+ - \"\").",
         "enum": [
           "Union",
           "Intersection",
@@ -4335,7 +4436,7 @@
             "items": {
               "$ref": "#/components/schemas/ResultSort"
             },
-            "description": "Sort field and order:\nSearch results are sorted by the specified facet field, either in ascending or descending order.\nIf no sort field is specified, then the search results are sorted by rank in descending order per default.\nMultiple sort fields are combined by a \"sort by, then sort by\"-method (\"tie-breaking\"-algorithm).\nThe results are sorted by the first field, and only for those results where the first field value is identical (tie) the results are sub-sorted by the second field,\nuntil the n-th field value is either not equal or the last field is reached.\nA special _score field (BM25x), reflecting how relevant the result is for a given search query (phrase match, match in title etc.) can be combined with any of the other sort fields as primary, secondary or n-th search criterium.\nSort is only enabled on facet fields that are defined in schema at create_index!\nExamples:\n- result_sort = vec![ResultSort {field: \"price\".into(), order: SortOrder::Descending, base: FacetValue::None},ResultSort {field: \"language\".into(), order: SortOrder::Ascending, base: FacetValue::None}];\n- result_sort = vec![ResultSort {field: \"location\".into(),order: SortOrder::Ascending, base: FacetValue::Point(vec![38.8951, -77.0364])}];",
+            "description": "Sort field and order:\n\nSearch results are sorted by the specified facet field, either in ascending or descending order.\nIf no sort field is specified, then the search results are sorted by rank in descending order per default.\nMultiple sort fields are combined by a \"sort by, then sort by\"-method (\"tie-breaking\"-algorithm).\nThe results are sorted by the first field, and only for those results where the first field value is identical (tie) the results are sub-sorted by the second field,\nuntil the n-th field value is either not equal or the last field is reached.\nA special _score field (BM25x), reflecting how relevant the result is for a given search query (phrase match, match in title etc.) can be combined with any of the other sort fields as primary, secondary or n-th search criterium.\nSort is only enabled on facet fields that are defined in schema at create_index!\n\nExamples:\n- result_sort = vec![ResultSort {field: \"price\".into(), order: SortOrder::Descending, base: FacetValue::None},ResultSort {field: \"language\".into(), order: SortOrder::Ascending, base: FacetValue::None}];\n- result_sort = vec![ResultSort {field: \"location\".into(),order: SortOrder::Ascending, base: FacetValue::Point(vec![38.8951, -77.0364])}];",
             "example": [
               {
                 "field": "date",
@@ -4485,7 +4586,7 @@
               "type": "integer",
               "minimum": 0
             },
-            "description": "Term length thresholds for each edit distance.\n  None:    max_dictionary_edit_distance for all terms lengths\n  Some(\\[4\\]):    max_dictionary_edit_distance for all terms lengths >= 4,\n  Some(\\[2,8\\]):    max_dictionary_edit_distance for all terms lengths >=2, max_dictionary_edit_distance +1 for all terms for lengths>=8"
+            "description": "Term length thresholds for each edit distance.\n  None    max_dictionary_edit_distance for all terms lengths\n  Some(\\[4\\])    max_dictionary_edit_distance for all terms lengths >= 4,\n  Some(\\[2,8\\])    max_dictionary_edit_distance for all terms lengths >=2, max_dictionary_edit_distance +1 for all terms for lengths>=8"
           },
           "count_threshold": {
             "type": "integer",
@@ -4631,7 +4732,7 @@
       },
       "TokenizerType": {
         "type": "string",
-        "description": "Defines tokenizer behavior:\nAsciiAlphabetic\n- Mainly for for benchmark compatibility\n- Only ASCII alphabetic chars are recognized as token.\n\nUnicodeAlphanumeric\n- All Unicode alphanumeric chars are recognized as token.\n- Allows '+' '-' '#' in middle or end of a token: c++, c#, block-max.\n\nUnicodeAlphanumericFolded\n- All Unicode alphanumeric chars are recognized as token.\n- Allows '+' '-' '#' in middle or end of a token: c++, c#, block-max.\n- Diacritics, accents, zalgo text, umlaut, bold, italic, full-width UTF-8 characters are converted into its basic representation.\n- Apostroph handling prevents that short term parts preceding or following the apostroph get indexed (e.g. \"s\" in \"someone's\").\n- Tokenizing might be slower due to folding and apostroph processing.\n\nUnicodeAlphanumericZH\n- Implements Chinese word segmentation to segment continuous Chinese text into tokens for indexing and search.\n- Supports mixed Latin and Chinese texts\n- Supports Chinese sentence boundary chars for KWIC snippets ahd highlighting.\n- Requires feature #[cfg(feature = \"zh\")]",
+        "description": "Defines tokenizer behavior:\n\nAsciiAlphabetic\n- Mainly for for benchmark compatibility\n- Only ASCII alphabetic chars are recognized as token.\n\nUnicodeAlphanumeric\n- All Unicode alphanumeric chars are recognized as token.\n- Allows '+' '-' '#' in middle or end of a token: c++, c#, block-max.\n\nUnicodeAlphanumericFolded\n- All Unicode alphanumeric chars are recognized as token.\n- Allows '+' '-' '#' in middle or end of a token: c++, c#, block-max.\n- Diacritics, accents, zalgo text, umlaut, bold, italic, full-width UTF-8 characters are converted into its basic representation.\n- Apostroph handling prevents that short term parts preceding or following the apostroph get indexed (e.g. \"s\" in \"someone's\").\n- Tokenizing might be slower due to folding and apostroph processing.\n\nUnicodeAlphanumericZH\n- Implements Chinese word segmentation to segment continuous Chinese text into tokens for indexing and search.\n- Supports mixed Latin and Chinese texts\n- Supports Chinese sentence boundary chars for KWIC snippets ahd highlighting.\n- Requires feature #[cfg(feature = \"zh\")]",
         "enum": [
           "AsciiAlphabetic",
           "UnicodeAlphanumeric",

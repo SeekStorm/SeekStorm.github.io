@@ -587,7 +587,7 @@
               "format": "int64",
               "minimum": 0
             },
-            "example": 0
+            "example": 1
           },
           {
             "name": "include_deleted",
@@ -1710,7 +1710,7 @@
           "Query"
         ],
         "summary": "Query Index",
-        "description": "Query results from index with index_id.\n\nQuery index via GET is a convenience function, that offers only a limited set of parameters compared to Query Index via POST.",
+        "description": "Query results from index with index_id.\n\nQuery index via GET is a convenience function, that **offers only a limited set of parameters compared to Query Index via POST**.\nAlways use Query Index via POST for the full set of parameters and maximum flexibility.\nQuery Index via GET is provided for simple queries and quick testing, and to be easily callable from browser address bar, but it is not intended for production use.",
         "operationId": "query_index_api_get",
         "parameters": [
           {
@@ -2254,6 +2254,7 @@
           "ngram_indexing": {
             "type": "integer",
             "format": "int32",
+            "description": "Specify n-gram indexing for the index. N-gram indexing can improve search performance for certain types of queries.\nThe n-gram set is defined as a bitwise combination of the following values:\n- NgramSet::SingleTerm = 0b00000000,,\n- NgramSet::NgramFF = 0b00000001, (Ngram frequent frequent)\n- NgramSet::NgramFR = 0b00000010, (Ngram frequent rare)\n- NgramSet::NgramRF = 0b00000011, (Ngram rare frequent)\n- NgramSet::NgramFFF = 0b00000100, (Ngram frequent frequent frequent)\n- NgramSet::NgramRFF = 0b00000101, (Ngram rare frequent frequent)\n- NgramSet::NgramFFR = 0b00000110, (Ngram frequent frequent rare)\n- NgramSet::NgramFRF = 0b00000111, (Ngram frequent rare frequent)\nFor example, to enable both NgramFF and NgramFFF, set ngram_indexing to 5 (1 | 4).\nNote: enabling n-gram indexing (ngram_indexing>0) will increase index size and indexing time, but improves search performance of phrase queries with frequent terms.",
             "minimum": 0
           },
           "document_compression": {

@@ -2,7 +2,7 @@
   "openapi": "3.1.0",
   "info": {
     "title": "SeekStorm REST API documentation",
-    "description": "Search engine library & multi-tenancy server",
+    "description": "Vector & lexical search engine library & multi-tenancy server",
     "contact": {
       "name": "Wolf Garbe",
       "email": "wolf.garbe@seekstorm.com"
@@ -234,7 +234,7 @@
                 "$ref": "#/components/schemas/CreateIndexRequest"
               },
               "examples": {
-                "Hybrid": {
+                "Example: Hybrid index": {
                   "value": {
                     "schema": [
                       {
@@ -272,7 +272,7 @@
                     }
                   }
                 },
-                "Lexical": {
+                "Example: Lexical index": {
                   "value": {
                     "schema": [
                       {
@@ -301,7 +301,7 @@
                     "tokenizer": "UnicodeAlphanumeric"
                   }
                 },
-                "Vector": {
+                "Example: Vector index": {
                   "value": {
                     "schema": [
                       {
@@ -758,10 +758,431 @@
                   "type": "string"
                 }
               },
-              "example": {
-                "title": "title1 test",
-                "body": "body1",
-                "url": "url1"
+              "examples": {
+                "Example: Multiple Lexical/Hybrid documents": {
+                  "value": [
+                    {
+                      "title": "title2",
+                      "body": "body2 test",
+                      "url": "url2"
+                    },
+                    {
+                      "title": "title3 test",
+                      "body": "body3 test",
+                      "url": "url3"
+                    }
+                  ]
+                },
+                "Example: Multiple Vector documents": {
+                  "value": [
+                    {
+                      "vector": [
+                        0.001,
+                        0.002,
+                        0.003,
+                        0.004,
+                        0.005,
+                        0.006,
+                        0.007,
+                        0.008,
+                        0.009,
+                        0.01,
+                        0.011,
+                        0.012,
+                        0.013,
+                        0.014,
+                        0.015,
+                        0.016,
+                        0.017,
+                        0.018,
+                        0.019,
+                        0.02,
+                        0.021,
+                        0.022,
+                        0.023,
+                        0.024,
+                        0.025,
+                        0.026,
+                        0.027,
+                        0.028,
+                        0.029,
+                        0.03,
+                        0.031,
+                        0.032,
+                        0.033,
+                        0.034,
+                        0.035,
+                        0.036,
+                        0.037,
+                        0.038,
+                        0.039,
+                        0.04,
+                        0.041,
+                        0.042,
+                        0.043,
+                        0.044,
+                        0.045,
+                        0.046,
+                        0.047,
+                        0.048,
+                        0.049,
+                        0.05,
+                        0.051,
+                        0.052,
+                        0.053,
+                        0.054,
+                        0.055,
+                        0.056,
+                        0.057,
+                        0.058,
+                        0.059,
+                        0.06,
+                        0.061,
+                        0.062,
+                        0.063,
+                        0.064,
+                        0.065,
+                        0.066,
+                        0.067,
+                        0.068,
+                        0.069,
+                        0.07,
+                        0.071,
+                        0.072,
+                        0.073,
+                        0.074,
+                        0.075,
+                        0.076,
+                        0.077,
+                        0.078,
+                        0.079,
+                        0.08,
+                        0.081,
+                        0.082,
+                        0.083,
+                        0.084,
+                        0.085,
+                        0.086,
+                        0.087,
+                        0.088,
+                        0.089,
+                        0.09,
+                        0.091,
+                        0.092,
+                        0.093,
+                        0.094,
+                        0.095,
+                        0.096,
+                        0.097,
+                        0.098,
+                        0.099,
+                        0.1,
+                        0.101,
+                        0.102,
+                        0.103,
+                        0.104,
+                        0.105,
+                        0.106,
+                        0.107,
+                        0.108,
+                        0.109,
+                        0.11,
+                        0.111,
+                        0.112,
+                        0.113,
+                        0.114,
+                        0.115,
+                        0.116,
+                        0.117,
+                        0.118,
+                        0.119,
+                        0.12,
+                        0.121,
+                        0.122,
+                        0.123,
+                        0.124,
+                        0.125,
+                        0.126,
+                        0.127,
+                        0.128
+                      ],
+                      "index": "0"
+                    },
+                    {
+                      "vector": [
+                        0.129,
+                        0.13,
+                        0.131,
+                        0.132,
+                        0.133,
+                        0.134,
+                        0.135,
+                        0.136,
+                        0.137,
+                        0.138,
+                        0.139,
+                        0.14,
+                        0.141,
+                        0.142,
+                        0.143,
+                        0.144,
+                        0.145,
+                        0.146,
+                        0.147,
+                        0.148,
+                        0.149,
+                        0.15,
+                        0.151,
+                        0.152,
+                        0.153,
+                        0.154,
+                        0.155,
+                        0.156,
+                        0.157,
+                        0.158,
+                        0.159,
+                        0.16,
+                        0.161,
+                        0.162,
+                        0.163,
+                        0.164,
+                        0.165,
+                        0.166,
+                        0.167,
+                        0.168,
+                        0.169,
+                        0.17,
+                        0.171,
+                        0.172,
+                        0.173,
+                        0.174,
+                        0.175,
+                        0.176,
+                        0.177,
+                        0.178,
+                        0.179,
+                        0.18,
+                        0.181,
+                        0.182,
+                        0.183,
+                        0.184,
+                        0.185,
+                        0.186,
+                        0.187,
+                        0.188,
+                        0.189,
+                        0.19,
+                        0.191,
+                        0.192,
+                        0.193,
+                        0.194,
+                        0.195,
+                        0.196,
+                        0.197,
+                        0.198,
+                        0.199,
+                        0.2,
+                        0.201,
+                        0.202,
+                        0.203,
+                        0.204,
+                        0.205,
+                        0.206,
+                        0.207,
+                        0.208,
+                        0.209,
+                        0.21,
+                        0.211,
+                        0.212,
+                        0.213,
+                        0.214,
+                        0.215,
+                        0.216,
+                        0.217,
+                        0.218,
+                        0.219,
+                        0.22,
+                        0.221,
+                        0.222,
+                        0.223,
+                        0.224,
+                        0.225,
+                        0.226,
+                        0.227,
+                        0.228,
+                        0.229,
+                        0.23,
+                        0.231,
+                        0.232,
+                        0.233,
+                        0.234,
+                        0.235,
+                        0.236,
+                        0.237,
+                        0.238,
+                        0.239,
+                        0.24,
+                        0.241,
+                        0.242,
+                        0.243,
+                        0.244,
+                        0.245,
+                        0.246,
+                        0.247,
+                        0.248,
+                        0.249,
+                        0.25,
+                        0.251,
+                        0.252,
+                        0.253,
+                        0.254,
+                        0.255,
+                        0.256
+                      ],
+                      "index": "1"
+                    },
+                    {
+                      "vector": [
+                        0.257,
+                        0.258,
+                        0.259,
+                        0.26,
+                        0.261,
+                        0.262,
+                        0.263,
+                        0.264,
+                        0.265,
+                        0.266,
+                        0.267,
+                        0.268,
+                        0.269,
+                        0.27,
+                        0.271,
+                        0.272,
+                        0.273,
+                        0.274,
+                        0.275,
+                        0.276,
+                        0.277,
+                        0.278,
+                        0.279,
+                        0.28,
+                        0.281,
+                        0.282,
+                        0.283,
+                        0.284,
+                        0.285,
+                        0.286,
+                        0.287,
+                        0.288,
+                        0.289,
+                        0.29,
+                        0.291,
+                        0.292,
+                        0.293,
+                        0.294,
+                        0.295,
+                        0.296,
+                        0.297,
+                        0.298,
+                        0.299,
+                        0.3,
+                        0.301,
+                        0.302,
+                        0.303,
+                        0.304,
+                        0.305,
+                        0.306,
+                        0.307,
+                        0.308,
+                        0.309,
+                        0.31,
+                        0.311,
+                        0.312,
+                        0.313,
+                        0.314,
+                        0.315,
+                        0.316,
+                        0.317,
+                        0.318,
+                        0.319,
+                        0.32,
+                        0.321,
+                        0.322,
+                        0.323,
+                        0.324,
+                        0.325,
+                        0.326,
+                        0.327,
+                        0.328,
+                        0.329,
+                        0.33,
+                        0.331,
+                        0.332,
+                        0.333,
+                        0.334,
+                        0.335,
+                        0.336,
+                        0.337,
+                        0.338,
+                        0.339,
+                        0.34,
+                        0.341,
+                        0.342,
+                        0.343,
+                        0.344,
+                        0.345,
+                        0.346,
+                        0.347,
+                        0.348,
+                        0.349,
+                        0.35,
+                        0.351,
+                        0.352,
+                        0.353,
+                        0.354,
+                        0.355,
+                        0.356,
+                        0.357,
+                        0.358,
+                        0.359,
+                        0.36,
+                        0.361,
+                        0.362,
+                        0.363,
+                        0.364,
+                        0.365,
+                        0.366,
+                        0.367,
+                        0.368,
+                        0.369,
+                        0.37,
+                        0.371,
+                        0.372,
+                        0.373,
+                        0.374,
+                        0.375,
+                        0.376,
+                        0.377,
+                        0.378,
+                        0.379,
+                        0.38,
+                        0.381,
+                        0.382,
+                        0.383,
+                        0.384
+                      ],
+                      "index": "2"
+                    }
+                  ]
+                },
+                "Example: Single Lexical/Hybrid document": {
+                  "value": {
+                    "title": "title1 test",
+                    "body": "body1",
+                    "url": "url1"
+                  }
+                }
               }
             }
           },
@@ -1425,108 +1846,219 @@
           "content": {
             "application/json": {
               "schema": {
-                "type": "object",
-                "description": "Search request object",
-                "required": [
-                  "query"
-                ],
-                "properties": {
-                  "query": {
-                    "type": "string",
-                    "description": "Query string, search operators + - \"\" are recognized."
-                  },
-                  "query_vector": {
-                    "description": "Optional query vector: If None, then the query vector is derived from the query string using the specified model. If Some, then the query vector is used for semantic search and the query string is only used for lexical search and highlighting."
-                  },
-                  "enable_empty_query": {
-                    "type": "boolean",
-                    "description": "Enable empty query: if true, an empty query string iterates through all indexed documents, supporting the query parameters: offset, length, query_facets, facet_filter, result_sort,\notherwise an empty query string returns no results.\nTypical use cases include index browsing, index export, conversion, analytics, audits, and inspection.",
-                    "default": false,
-                    "example": false
-                  },
-                  "offset": {
-                    "type": "integer",
-                    "description": "Offset of search results to return.",
-                    "default": 0,
-                    "example": 0,
-                    "minimum": 0
-                  },
-                  "length": {
-                    "type": "integer",
-                    "description": "Number of search results to return.",
-                    "default": 10,
-                    "example": 10,
-                    "minimum": 1
-                  },
-                  "result_type": {
-                    "$ref": "#/components/schemas/ResultType"
-                  },
-                  "realtime": {
-                    "type": "boolean",
-                    "description": "True realtime search: include indexed, but uncommitted documents into search results."
-                  },
-                  "highlights": {
-                    "type": "array",
-                    "items": {
-                      "$ref": "#/components/schemas/Highlight"
-                    }
-                  },
-                  "field_filter": {
-                    "type": "array",
-                    "items": {
-                      "type": "string"
-                    },
-                    "description": "Specify field names where to search at querytime, whereas SchemaField.indexed is set at indextime. If empty then all indexed fields are searched.",
-                    "example": [
-                      "title"
-                    ]
-                  },
-                  "fields": {
-                    "type": "array",
-                    "items": {
-                      "type": "string"
-                    }
-                  },
-                  "distance_fields": {
-                    "type": "array",
-                    "items": {
-                      "$ref": "#/components/schemas/DistanceField"
-                    }
-                  },
-                  "query_facets": {
-                    "type": "array",
-                    "items": {
-                      "$ref": "#/components/schemas/QueryFacet"
-                    }
-                  },
-                  "facet_filter": {
-                    "type": "array",
-                    "items": {
-                      "$ref": "#/components/schemas/FacetFilter"
-                    }
-                  },
-                  "result_sort": {
-                    "type": "array",
-                    "items": {
-                      "$ref": "#/components/schemas/ResultSort"
-                    },
-                    "description": "Sort field and order:\n\nSearch results are sorted by the specified facet field, either in ascending or descending order.\nIf no sort field is specified, then the search results are sorted by rank in descending order per default.\nMultiple sort fields are combined by a \"sort by, then sort by\"-method (\"tie-breaking\"-algorithm).\nThe results are sorted by the first field, and only for those results where the first field value is identical (tie) the results are sub-sorted by the second field,\nuntil the n-th field value is either not equal or the last field is reached.\nA special _score field (BM25x), reflecting how relevant the result is for a given search query (phrase match, match in title etc.) can be combined with any of the other sort fields as primary, secondary or n-th search criterium.\nSort is only enabled on facet fields that are defined in schema at create_index!\n\nExamples:\n- result_sort = vec![ResultSort {field: \"price\".into(), order: SortOrder::Descending, base: FacetValue::None},ResultSort {field: \"language\".into(), order: SortOrder::Ascending, base: FacetValue::None}];\n- result_sort = vec![ResultSort {field: \"location\".into(),order: SortOrder::Ascending, base: FacetValue::Point(vec![38.8951, -77.0364])}];",
-                    "example": [
+                "$ref": "#/components/schemas/SearchRequestObject"
+              },
+              "examples": {
+                "Example: Hybrid search": {
+                  "value": {
+                    "query": "detroit",
+                    "query_vector": null,
+                    "enable_empty_query": false,
+                    "offset": 0,
+                    "length": 10,
+                    "result_type": "TopkCount",
+                    "realtime": true,
+                    "highlights": [
                       {
-                        "field": "date",
-                        "order": "Ascending",
-                        "base": "None"
+                        "field": "",
+                        "name": "",
+                        "fragment_number": 0,
+                        "fragment_size": 0,
+                        "highlight_markup": true,
+                        "pre_tags": "",
+                        "post_tags": ""
                       }
-                    ]
-                  },
-                  "query_type_default": {
-                    "$ref": "#/components/schemas/QueryType"
-                  },
-                  "query_rewriting": {
-                    "$ref": "#/components/schemas/QueryRewriting"
-                  },
-                  "search_mode": {
-                    "$ref": "#/components/schemas/SearchMode"
+                    ],
+                    "field_filter": [
+                      "title"
+                    ],
+                    "fields": [],
+                    "query_type_default": "Intersection",
+                    "query_rewriting": "SearchOnly",
+                    "search_mode": {
+                      "Hybrid": {
+                        "similarity_threshold": 0.7,
+                        "ann_mode": {
+                          "Nprobe": 55
+                        }
+                      }
+                    }
+                  }
+                },
+                "Example: Lexical search": {
+                  "value": {
+                    "query": "detroit",
+                    "query_vector": null,
+                    "enable_empty_query": false,
+                    "offset": 0,
+                    "length": 10,
+                    "result_type": "TopkCount",
+                    "realtime": true,
+                    "highlights": [
+                      {
+                        "field": "",
+                        "name": "",
+                        "fragment_number": 0,
+                        "fragment_size": 0,
+                        "highlight_markup": true,
+                        "pre_tags": "",
+                        "post_tags": ""
+                      }
+                    ],
+                    "field_filter": [
+                      "title"
+                    ],
+                    "fields": [],
+                    "query_type_default": "Intersection",
+                    "query_rewriting": "SearchOnly",
+                    "search_mode": "Lexical"
+                  }
+                },
+                "Example: Vector search": {
+                  "value": {
+                    "query": "",
+                    "query_vector": [
+                      0.001,
+                      0.002,
+                      0.003,
+                      0.004,
+                      0.005,
+                      0.006,
+                      0.007,
+                      0.008,
+                      0.009,
+                      0.01,
+                      0.011,
+                      0.012,
+                      0.013,
+                      0.014,
+                      0.015,
+                      0.016,
+                      0.017,
+                      0.018,
+                      0.019,
+                      0.02,
+                      0.021,
+                      0.022,
+                      0.023,
+                      0.024,
+                      0.025,
+                      0.026,
+                      0.027,
+                      0.028,
+                      0.029,
+                      0.03,
+                      0.031,
+                      0.032,
+                      0.033,
+                      0.034,
+                      0.035,
+                      0.036,
+                      0.037,
+                      0.038,
+                      0.039,
+                      0.04,
+                      0.041,
+                      0.042,
+                      0.043,
+                      0.044,
+                      0.045,
+                      0.046,
+                      0.047,
+                      0.048,
+                      0.049,
+                      0.05,
+                      0.051,
+                      0.052,
+                      0.053,
+                      0.054,
+                      0.055,
+                      0.056,
+                      0.057,
+                      0.058,
+                      0.059,
+                      0.06,
+                      0.061,
+                      0.062,
+                      0.063,
+                      0.064,
+                      0.065,
+                      0.066,
+                      0.067,
+                      0.068,
+                      0.069,
+                      0.07,
+                      0.071,
+                      0.072,
+                      0.073,
+                      0.074,
+                      0.075,
+                      0.076,
+                      0.077,
+                      0.078,
+                      0.079,
+                      0.08,
+                      0.081,
+                      0.082,
+                      0.083,
+                      0.084,
+                      0.085,
+                      0.086,
+                      0.087,
+                      0.088,
+                      0.089,
+                      0.09,
+                      0.091,
+                      0.092,
+                      0.093,
+                      0.094,
+                      0.095,
+                      0.096,
+                      0.097,
+                      0.098,
+                      0.099,
+                      0.1,
+                      0.101,
+                      0.102,
+                      0.103,
+                      0.104,
+                      0.105,
+                      0.106,
+                      0.107,
+                      0.108,
+                      0.109,
+                      0.11,
+                      0.111,
+                      0.112,
+                      0.113,
+                      0.114,
+                      0.115,
+                      0.116,
+                      0.117,
+                      0.118,
+                      0.119,
+                      0.12,
+                      0.121,
+                      0.122,
+                      0.123,
+                      0.124,
+                      0.125,
+                      0.126,
+                      0.127,
+                      0.128
+                    ],
+                    "offset": 0,
+                    "length": 10,
+                    "result_type": "Topk",
+                    "realtime": false,
+                    "search_mode": {
+                      "Vector": {
+                        "similarity_threshold": 0.7,
+                        "ann_mode": {
+                          "Nprobe": 55
+                        }
+                      }
+                    }
                   }
                 }
               }
@@ -1661,6 +2193,7 @@
         "properties": {
           "index_name": {
             "type": "string",
+            "description": "Index name, used for informational purposes only.",
             "example": "demo_index"
           },
           "schema": {
@@ -1668,6 +2201,7 @@
             "items": {
               "$ref": "#/components/schemas/SchemaField"
             },
+            "description": "Schema definition for the index: field name, field type, and indexing options. The schema defines how documents are indexed and searched. It specifies the fields that are indexed, stored, and used for faceting, as well as the field types and their properties. It also defines whether lexical, hybrid, or vector search is enabled for each field.",
             "example": [
               {
                 "field": "title",
@@ -1699,19 +2233,23 @@
             ]
           },
           "similarity": {
-            "$ref": "#/components/schemas/LexicalSimilarity"
+            "$ref": "#/components/schemas/LexicalSimilarity",
+            "description": "Specify similarity measure for the index: (default=Bm25fProximity). The similarity function is used to calculate the relevance score of search results for a given search query. The choice of similarity function can affect search performance and relevance, depending on the characteristics of the text being indexed and the search queries being executed."
           },
           "tokenizer": {
-            "$ref": "#/components/schemas/TokenizerType"
+            "$ref": "#/components/schemas/TokenizerType",
+            "description": "Specify tokenizer type for the index: (default=UnicodeAlphanumeric). The tokenizer is used to split text into tokens for indexing and searching. The choice of tokenizer can affect search performance and relevance, depending on the language and characteristics of the text being indexed."
           },
           "stemmer": {
             "$ref": "#/components/schemas/StemmerType"
           },
           "stop_words": {
-            "$ref": "#/components/schemas/StopwordType"
+            "$ref": "#/components/schemas/StopwordType",
+            "description": "Specify stop words for the index. Stop words are not indexed and not searched for. This can be used to reduce index size and improve search performance by excluding high-frequency, low-information terms from the index."
           },
           "frequent_words": {
-            "$ref": "#/components/schemas/FrequentwordType"
+            "$ref": "#/components/schemas/FrequentwordType",
+            "description": "Specify frequent words for the index. Frequent words are used to optimize search performance for high-frequency terms."
           },
           "ngram_indexing": {
             "type": "integer",
@@ -1719,13 +2257,15 @@
             "minimum": 0
           },
           "document_compression": {
-            "$ref": "#/components/schemas/DocumentCompression"
+            "$ref": "#/components/schemas/DocumentCompression",
+            "description": "Enable document compression for the index. This can reduce the index size on disk and in memory, but may increase indexing and search latency. Default: Snappy compression."
           },
           "synonyms": {
             "type": "array",
             "items": {
               "$ref": "#/components/schemas/Synonym"
             },
+            "description": "Specify synonyms for the index. Synonyms are used to expand search queries with additional terms that have the same or similar meaning, improving recall and search relevance. The multiway option specifies whether the synonym relationship is multiway (if true, all terms in the synonym set are considered synonyms of each other) or one-way (if false, only the first term in the synonym set is considered the main term, and the other terms are considered synonyms of the main term).",
             "example": [
               {
                 "terms": [
@@ -1763,7 +2303,8 @@
                 "type": "null"
               },
               {
-                "$ref": "#/components/schemas/QueryCompletion"
+                "$ref": "#/components/schemas/QueryCompletion",
+                "description": "Enable query completion for search queries using a prefix dictionary. When enabled, a prefix dictionary is incrementally created during indexing of documents and stored in the index. The prefix dictionary is used to generate suggestions for query completion based on the indexed documents. In addition you need to set the parameter `query_rewriting` in the search method to enable it per query. Note: enabling query completion increases the index size, indexing time and query latency."
               }
             ]
           },
@@ -1771,7 +2312,8 @@
             "$ref": "#/components/schemas/Clustering"
           },
           "inference": {
-            "$ref": "#/components/schemas/Inference"
+            "$ref": "#/components/schemas/Inference",
+            "description": "Enable inference for search and indexing. This can be used to create vector representations of documents and queries for semantic search, e.g. by using a model like PotionBase2M."
           }
         }
       },
@@ -3066,7 +3608,7 @@
       },
       "QueryCompletion": {
         "type": "object",
-        "description": "Defines spelling correction (fuzzy search) settings for an index.",
+        "description": "Defines query completion generation for an index.",
         "required": [
           "max_completion_entries"
         ],
@@ -4395,7 +4937,8 @@
             "type": "array",
             "items": {
               "$ref": "#/components/schemas/Highlight"
-            }
+            },
+            "description": "Specify field names where to create keyword-in-context fragments and highlight query terms."
           },
           "field_filter": {
             "type": "array",
@@ -4411,25 +4954,29 @@
             "type": "array",
             "items": {
               "type": "string"
-            }
+            },
+            "description": "Specify names of fields to return in the search results, where SchemaField.store is set at indextime. If empty then all stored fields are returned."
           },
           "distance_fields": {
             "type": "array",
             "items": {
               "$ref": "#/components/schemas/DistanceField"
-            }
+            },
+            "description": "Specify distance fields to derive at query time and return in the search results."
           },
           "query_facets": {
             "type": "array",
             "items": {
               "$ref": "#/components/schemas/QueryFacet"
-            }
+            },
+            "description": "Facets to return with search results: if empty then no facets are returned. Facets are only enabled on facet fields that are defined in schema at create_index!"
           },
           "facet_filter": {
             "type": "array",
             "items": {
               "$ref": "#/components/schemas/FacetFilter"
-            }
+            },
+            "description": "Facet filters to filter search results by facet values: if empty then no facet filters are applied. Facet filters are only enabled on facet fields that are defined in schema at create_index!"
           },
           "result_sort": {
             "type": "array",
@@ -4446,13 +4993,16 @@
             ]
           },
           "query_type_default": {
-            "$ref": "#/components/schemas/QueryType"
+            "$ref": "#/components/schemas/QueryType",
+            "description": "Specify default query type: (default=Intersection). This can be overwritten by search operator within the query string (+-\"\")."
           },
           "query_rewriting": {
-            "$ref": "#/components/schemas/QueryRewriting"
+            "$ref": "#/components/schemas/QueryRewriting",
+            "description": "Specify query rewriting method for search query correction and completion: (default=SearchOnly)."
           },
           "search_mode": {
-            "$ref": "#/components/schemas/SearchMode"
+            "$ref": "#/components/schemas/SearchMode",
+            "description": "Specify search mode: (default=Lexical)."
           }
         }
       },
@@ -4565,7 +5115,7 @@
       },
       "SpellingCorrection": {
         "type": "object",
-        "description": "Defines spelling correction (fuzzy search) settings for an index.",
+        "description": "Defines spelling correction (fuzzy search) and dictionary generation settings for an index.",
         "required": [
           "max_dictionary_edit_distance",
           "count_threshold",
